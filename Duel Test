@@ -29,7 +29,7 @@ local FILE_NAME = "DetixesHubConfig.json"
 -- Galaxy Mover Variables
 local dropEnabled = false
 local _wfConns = {}
-local Config = { ForwardSpeed = 100, ReturnSpeed = 28 }
+local Config = { ForwardSpeed = 130, ReturnSpeed = 28 }
 local POSITION_R1     = Vector3.new(-476.16, -6.52,  25.62)
 local POSITION_REND   = Vector3.new(-483.04, -5.09,  23.14)
 local POSITION_RFINAL = Vector3.new(-476.17, -7.91, 97.91)
@@ -93,7 +93,7 @@ local function applyLowQualityToPart(part)
 		part.Reflectance = 0
 		part.CastShadow = false
 		if part.Transparency == 0 then
-			part.Transparency = 0 
+			part.Transparency = 0.5 
 		end
 	end
 end
@@ -556,12 +556,12 @@ local function createToggle(text)
     return frame, indicator, switchBase
 end
 
-local fovToggle, fovInd, fovBase = createToggle("FOV (100)")
-local galaxyToggle, galInd, galBase = createToggle("GALAXY MODE")
-local antiBatToggle, batInd, batBase = createToggle("ANTI BAT")
-local antiFlingToggle, fliInd, fliBase = createToggle("ANTI-FLING")
-local infJumpToggle, jumpInd, jumpBase = createToggle("INFINITE JUMP")
-local noAnimToggle, noAnimInd, noAnimBase = createToggle("NO ANIMATION")
+local fovToggle, fovInd, fovBase = createToggle("High FOV")
+local galaxyToggle, galInd, galBase = createToggle("Galaxy Sky")
+local antiBatToggle, batInd, batBase = createToggle("Bat-Anti")
+local antiFlingToggle, fliInd, fliBase = createToggle("Fling-Anti")
+local infJumpToggle, jumpInd, jumpBase = createToggle("Inf Jump")
+local noAnimToggle, noAnimInd, noAnimBase = createToggle("No Anims")
 
 local saveBtn = Instance.new("TextButton")
 saveBtn.Size = UDim2.new(0.9, 0, 0, 32); saveBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 0); saveBtn.Text = "SAVE CONFIG"; saveBtn.TextColor3 = Color3.new(1, 1, 1); saveBtn.Font = Enum.Font.GothamBold; saveBtn.TextSize = 14; saveBtn.Parent = container

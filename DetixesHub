@@ -647,7 +647,7 @@ footerLbl.Text="https://discord.gg/YqWgQsjf3"; footerLbl.TextColor3=Color3.fromR
 footerLbl.Font=Enum.Font.Gotham; footerLbl.TextSize=10; footerLbl.TextXAlignment=Enum.TextXAlignment.Center
 
 local mini = Instance.new("TextButton",gui)
-mini.Name="VyseMini"; mini.Size=UDim2.new(0,110,0,30); mini.Position=UDim2.new(0,20,0,20)
+mini.Name="DetixesMini"; mini.Size=UDim2.new(0,110,0,30); mini.Position=UDim2.new(0,20,0,20)
 mini.BackgroundColor3=C_PANEL; mini.BorderSizePixel=0; mini.Text=""; mini.ZIndex=20; mini.Visible=false
 Instance.new("UICorner",mini).CornerRadius=UDim.new(0,7); Instance.new("UIStroke",mini).Color=C_BORDER2
 local miniLogo = Instance.new("ImageLabel",mini)
@@ -655,7 +655,7 @@ miniLogo.Size=UDim2.new(0,20,0,20); miniLogo.Position=UDim2.new(0,6,0.5,-10)
 miniLogo.BackgroundTransparency=1; miniLogo.Image=LOGO_ID; miniLogo.ScaleType=Enum.ScaleType.Fit; miniLogo.ZIndex=21
 local miniTxt = Instance.new("TextLabel",mini)
 miniTxt.Size=UDim2.new(1,-34,1,0); miniTxt.Position=UDim2.new(0,32,0,0)
-miniTxt.BackgroundTransparency=1; miniTxt.Text="Vyse"; miniTxt.TextColor3=C_ACCENT
+miniTxt.BackgroundTransparency=1; miniTxt.Text="Detixes"; miniTxt.TextColor3=C_ACCENT
 miniTxt.Font=Enum.Font.GothamBold; miniTxt.TextSize=12; miniTxt.TextXAlignment=Enum.TextXAlignment.Left; miniTxt.ZIndex=21
 mini.MouseButton1Click:Connect(function() State.guiVisible=true; main.Visible=true; shadow.Visible=true; mini.Visible=false end)
 mini.MouseEnter:Connect(function() TweenService:Create(mini,TweenInfo.new(0.1),{BackgroundColor3=C_ROW}):Play() end)
@@ -1340,16 +1340,16 @@ saveConfig = function()
 		guiHideKey=Keys.guiHide.Name, floatKey=Keys.float.Name, floatHeight=State.floatHeight,
 		animEnabled=State.animEnabled, unwalkEnabled=State.unwalkEnabled,
 	}
-	local ok=pcall(function() writefile("VyseSlottedConfig.json",HttpService:JSONEncode(cfg)) end)
+	local ok=pcall(function() writefile("DetixesHubConfig.json",HttpService:JSONEncode(cfg)) end)
 	if ok then
 		local prev=saveBtn.Text; saveBtn.Text="Saved!"; task.wait(1.5); saveBtn.Text=prev
 	else saveBtn.Text="Failed!"; task.wait(1.5); saveBtn.Text="Save Config" end
 end
 
 local function loadConfig()
-	local hasFile=false; pcall(function() hasFile=isfile("VyseSlottedConfig.json") end)
+	local hasFile=false; pcall(function() hasFile=isfile("DetixesHubConfig.json") end)
 	if not hasFile then return end
-	local ok,cfg=pcall(function() return HttpService:JSONDecode(readfile("VyseSlottedConfig.json")) end)
+	local ok,cfg=pcall(function() return HttpService:JSONDecode(readfile("DetixesHubConfig.json")) end)
 	if not ok or not cfg then return end
 	if cfg.normalSpeed and type(cfg.normalSpeed)=="number" then State.normalSpeed=cfg.normalSpeed; normalBox.Text=tostring(cfg.normalSpeed) end
 	if cfg.carrySpeed  and type(cfg.carrySpeed)=="number"  then State.carrySpeed=cfg.carrySpeed;   carryBox.Text=tostring(cfg.carrySpeed)   end
@@ -1574,4 +1574,4 @@ task.spawn(function()
 end)
 
 loadConfig()
-print("[Vyse Slotted] Loaded!")
+print("[Detixes Duels // Fully Loaded...]")

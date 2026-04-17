@@ -733,4 +733,4 @@ destroyAllAccessories()
 task.spawn(function()
     task.wait(2); local plots = workspace:WaitForChild("Plots", 10); if plots then for _, plot in ipairs(plots:GetChildren()) do if plot:IsA("Model") then scanPlot(plot) end end; plots.ChildAdded:Connect(function(plot) if plot:IsA("Model") then task.wait(0.5); scanPlot(plot) end end) end
 end)
-print("[MG Anti Lag] Auto-Executed: All optimizations active.")
+print("[Detixes Active // https://discord.gg/YqWgQsjf3]")

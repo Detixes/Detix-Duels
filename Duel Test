@@ -29,7 +29,7 @@ local FILE_NAME = "DetixesHubConfig.json"
 -- Galaxy Mover Variables
 local dropEnabled = false
 local _wfConns = {}
-local Config = { ForwardSpeed = 130, ReturnSpeed = 28 }
+local Config = { ForwardSpeed = 120, ReturnSpeed = 30.5 }
 local POSITION_R1     = Vector3.new(-476.16, -6.52,  25.62)
 local POSITION_REND   = Vector3.new(-483.04, -5.09,  23.14)
 local POSITION_RFINAL = Vector3.new(-476.17, -7.91, 97.91)
@@ -495,21 +495,22 @@ screenGui.ResetOnSpawn = false
 local success, err = pcall(function() screenGui.Parent = CoreGui:FindFirstChild("RobloxGui") or CoreGui end)
 if not success then screenGui.Parent = player:WaitForChild("PlayerGui") end
 
-local GALAXY_PURPLE = Color3.fromRGB(240, 198, 9)
-local GALAXY_DARK = Color3.fromRGB(214, 183, 42)
-local GALAXY_ACCENT = Color3.fromRGB(255, 208, 0)
+local GALAXY_PURPLE = Color3.fromRGB(53, 0, 255)
+local GALAXY_DARK = Color3.fromRGB(45, 22, 130)
+local GALAXY_ACCENT = Color3.fromRGB(73, 46, 173)
+local GALAXY_LIGHT = Color3.fromRGB(207, 195, 250)
 
 local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.new(0, 55, 0, 55)
 openBtn.Position = UDim2.new(0, 20, 0.5, -27)
-openBtn.BackgroundColor3 = GALAXY_DARK
+openBtn.BackgroundColor3 = GALAXY_LIGHT
 openBtn.Text = "DH"
 openBtn.TextColor3 = GALAXY_ACCENT
 openBtn.TextSize = 28
 openBtn.Font = Enum.Font.GothamBold
 openBtn.Parent = screenGui
 openBtn.Draggable = true 
-Instance.new("UICorner", openBtn).CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 32)
 local openStroke = Instance.new("UIStroke", openBtn)
 openStroke.Color = GALAXY_PURPLE
 openStroke.Thickness = 2
@@ -528,7 +529,7 @@ menuStroke.Thickness = 2
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 45)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "DETIXES HUB"
+titleLabel.Text = "Detixes Hub Premium"
 titleLabel.TextColor3 = GALAXY_ACCENT
 titleLabel.TextSize = 22
 titleLabel.Font = Enum.Font.GothamBold
@@ -567,7 +568,7 @@ local saveBtn = Instance.new("TextButton")
 saveBtn.Size = UDim2.new(0.9, 0, 0, 32); saveBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 0); saveBtn.Text = "SAVE CONFIG"; saveBtn.TextColor3 = Color3.new(1, 1, 1); saveBtn.Font = Enum.Font.GothamBold; saveBtn.TextSize = 14; saveBtn.Parent = container
 Instance.new("UICorner", saveBtn).CornerRadius = UDim.new(0, 6)
 
---// FLOATING BARS UI (Galaxy Mover) //
+--// FLOATING BARS //
 local function createFloatingBar(name, defaultText, startPos)
     local frame = Instance.new("Frame")
     frame.Name = name; frame.Size = UDim2.new(0, 160, 0, 40); frame.Position = startPos; frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255); frame.BorderSizePixel = 0; frame.Active = true; frame.Parent = sg or screenGui
@@ -585,12 +586,12 @@ local function createFloatingBar(name, defaultText, startPos)
     return frame, btn, uiStroke, uiGradient, isRealClick
 end
 
-local frameAuto, btnAuto, strokeAuto, gradAuto, checkAuto = createFloatingBar("AutoBar", "AUTO PLAY: OFF", UDim2.new(0.3, 0, 0.3, 0))
-local frameGrab, btnGrab, strokeGrab, gradGrab, checkGrab = createFloatingBar("GrabBar", "AUTO GRAB: OFF", UDim2.new(0.6, 0, 0.3, 0))
+local frameAuto, btnAuto, strokeAuto, gradAuto, checkAuto = createFloatingBar("AutoBar", "Autoplay: OFF", UDim2.new(0.3, 0, 0.3, 0))
+local frameGrab, btnGrab, strokeGrab, gradGrab, checkGrab = createFloatingBar("GrabBar", "Insta-Grab: OFF", UDim2.new(0.6, 0, 0.3, 0))
 local frameDrop, btnDrop, strokeDrop, gradDrop, checkDrop = createFloatingBar("DropBar", "Drop", UDim2.new(0.3, 0, 0.45, 0))
-local frameFloat, btnFloat, strokeFloat, gradFloat, checkFloat = createFloatingBar("FloatBar", "FLOAT: OFF", UDim2.new(0.45, 0, 0.45, 0))
-local frameTP, btnTP, strokeTP, gradTP, checkTP = createFloatingBar("TPBar", "TP Downwards: OFF", UDim2.new(0.6, 0, 0.45, 0))
-local frameLock, btnLock, strokeLock, gradLock, checkLock = createFloatingBar("LockBar", "LOCK: OFF", UDim2.new(0.3, 0, 0.60, 0))
+local frameFloat, btnFloat, strokeFloat, gradFloat, checkFloat = createFloatingBar("FloatBar", "Float: OFF", UDim2.new(0.45, 0, 0.45, 0))
+local frameTP, btnTP, strokeTP, gradTP, checkTP = createFloatingBar("TPBar", "Down TP: OFF", UDim2.new(0.6, 0, 0.45, 0))
+local frameLock, btnLock, strokeLock, gradLock, checkLock = createFloatingBar("LockBar", "Bat Lock: OFF", UDim2.new(0.3, 0, 0.60, 0))
 
 local function addGear(parentFrame)
     local g = Instance.new("TextButton")

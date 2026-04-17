@@ -7,7 +7,7 @@ local ContentProvider = game:GetService("ContentProvider")
 local LP = Players.LocalPlayer
 
 local State = {
-	normalSpeed = 122, carrySpeed = 29.8,
+	normalSpeed = 82.6, carrySpeed = 29.8,
 	speedToggled = false, autoBatToggled = false,
 	hittingCooldown = false, infJumpEnabled = false,
 	antiRagdollEnabled = false, fpsBoostEnabled = false,
@@ -36,7 +36,7 @@ local Keys = {
 }
 
 local Steal = {
-	AutoStealEnabled = false, StealRadius = 20, StealDuration = 0.25,
+	AutoStealEnabled = false, StealRadius = 9, StealDuration = 0.25,
 	Data = {}, plotCache = {}, plotCacheTime = {},
 	cachedPrompts = {}, promptCacheTime = 0,
 }
@@ -109,7 +109,7 @@ local C_ON_BG   = Color3.fromRGB(55,55,55)
 local C_OFF_BG  = Color3.fromRGB(22,22,22)
 local C_KEY_BG  = Color3.fromRGB(28,28,28)
 
-local LOGO_ID = "rbxassetid://120042443836261"
+local LOGO_ID = "rbxassetid://107410467219286"
 task.spawn(function() pcall(function() ContentProvider:PreloadAsync({LOGO_ID}) end) end)
 
 local Anims = {
@@ -271,7 +271,7 @@ end
 
 local Camera = workspace.CurrentCamera
 
-for _, name in pairs({"VyseSlottedGUI"}) do
+for _, name in pairs({"DetixesHubGUI"}) do
 	local old = game:GetService("CoreGui"):FindFirstChild(name)
 	if old then old:Destroy() end
 end
@@ -307,7 +307,7 @@ local function makeDraggable(frame, shadowFrame, isMain)
 end
 
 local gui = Instance.new("ScreenGui")
-gui.Name="VyseSlottedGUI"; gui.ResetOnSpawn=false; gui.DisplayOrder=10
+gui.Name="DetixesHubGUI"; gui.ResetOnSpawn=false; gui.DisplayOrder=10
 gui.IgnoreGuiInset=true; gui.Parent=LP:WaitForChild("PlayerGui")
 local shadow = Instance.new("Frame",gui)
 shadow.Size=UDim2.new(0,316,0,606); shadow.Position=UDim2.new(0,17,0,17)
@@ -337,13 +337,13 @@ logo.BackgroundTransparency=1; logo.Image=LOGO_ID; logo.ScaleType=Enum.ScaleType
 
 local titleLbl = Instance.new("TextLabel",header)
 titleLbl.Size=UDim2.new(0,160,0,22); titleLbl.Position=UDim2.new(0,66,0,11)
-titleLbl.BackgroundTransparency=1; titleLbl.Text="VYSE SLOTTED"
+titleLbl.BackgroundTransparency=1; titleLbl.Text="Detixes Hub"
 titleLbl.TextColor3=C_WHITE; titleLbl.Font=Enum.Font.GothamBlack; titleLbl.TextSize=15
 titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=6
 
 local subLbl = Instance.new("TextLabel",header)
 subLbl.Size=UDim2.new(0,160,0,14); subLbl.Position=UDim2.new(0,67,0,35)
-subLbl.BackgroundTransparency=1; subLbl.Text="by xeno"
+subLbl.BackgroundTransparency=1; subLbl.Text="by @Detixes on TikTok/Discord"
 subLbl.TextColor3=C_DIM; subLbl.Font=Enum.Font.Gotham; subLbl.TextSize=11
 subLbl.TextXAlignment=Enum.TextXAlignment.Left; subLbl.ZIndex=6
 
@@ -643,7 +643,7 @@ makeGap(8)
 
 local footerLbl = Instance.new("TextLabel",scroll)
 footerLbl.Size=UDim2.new(1,0,0,18); footerLbl.BackgroundTransparency=1; footerLbl.LayoutOrder=LO()
-footerLbl.Text="vyse.cc  ·  v2.0"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
+footerLbl.Text="https://discord.gg/YqWgQsjf3"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
 footerLbl.Font=Enum.Font.Gotham; footerLbl.TextSize=10; footerLbl.TextXAlignment=Enum.TextXAlignment.Center
 
 local mini = Instance.new("TextButton",gui)

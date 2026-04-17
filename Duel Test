@@ -529,9 +529,9 @@ menuStroke.Thickness = 2
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 45)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Detixes Hub Premium"
+titleLabel.Text = "// Detixes Hub Premium //"
 titleLabel.TextColor3 = GALAXY_ACCENT
-titleLabel.TextSize = 22
+titleLabel.TextSize = 12
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.Parent = sideMenu
 
@@ -557,7 +557,7 @@ local function createToggle(text)
     return frame, indicator, switchBase
 end
 
-local fovToggle, fovInd, fovBase = createToggle("High FOV")
+local fovToggle, fovInd, fovBase = createToggle("Desync")
 local galaxyToggle, galInd, galBase = createToggle("Galaxy Sky")
 local antiBatToggle, batInd, batBase = createToggle("Bat-Anti")
 local antiFlingToggle, fliInd, fliBase = createToggle("Fling-Anti")
@@ -634,29 +634,9 @@ openBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-fovToggle.MouseButton1Click:Connect(function() fovOn = not fovOn; camera.FieldOfView = fovOn and 100 or 70; updateVisual(fovOn, fovInd, fovBase) end)
-galaxyToggle.MouseButton1Click:Connect(function()
-    galaxyOn = not galaxyOn
-    if galaxyOn then
-        local sky = Lighting:FindFirstChild("GalaxySky") or Instance.new("Sky")
-        sky.Name = "GalaxySky"; sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = "rbxassetid://159454299", "rbxassetid://159454296", "rbxassetid://159454293", "rbxassetid://159454286", "rbxassetid://159454289", "rbxassetid://159454291"; sky.Parent = Lighting
-        Lighting.Brightness, Lighting.ClockTime, Lighting.ExposureCompensation = 0, 0, -2; Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
-    else
-        if Lighting:FindFirstChild("GalaxySky") then Lighting.GalaxySky:Destroy() end
-        Lighting.Brightness, Lighting.ClockTime, Lighting.ExposureCompensation = defBrightness, defClock, 0; Lighting.OutdoorAmbient = defAmbient
-    end
-    updateVisual(galaxyOn, galInd, galBase)
+fovToggle.MouseButton1Click:Connect(function()
+    print("TEST")
 end)
-antiBatToggle.MouseButton1Click:Connect(function() antiBatOn = not antiBatOn; updateVisual(antiBatOn, batInd, batBase) end)
-antiFlingToggle.MouseButton1Click:Connect(function() antiFlingOn = not antiFlingOn; updateVisual(antiFlingOn, fliInd, fliBase) end)
-infJumpToggle.MouseButton1Click:Connect(function() infinityJumpEnabled = not infinityJumpEnabled; updateVisual(infinityJumpEnabled, jumpInd, jumpBase) end)
-noAnimToggle.MouseButton1Click:Connect(function() if not noAnimToggled then startNoAnim() else stopNoAnim() end; updateVisual(noAnimToggled, noAnimInd, noAnimBase) end)
-
-local function setVisual(btn, grad, stroke, state, onTxt, offTxt)
-    btn.Text = state and onTxt or offTxt; btn.TextColor3 = state and Color3.new(1,1,1) or Color3.fromRGB(200, 180, 255)
-    grad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, state and Color3.fromRGB(65, 20, 100) or Color3.fromRGB(26, 11, 46)), ColorSequenceKeypoint.new(1, state and Color3.fromRGB(20, 50, 80) or Color3.fromRGB(5, 5, 20))}
-    stroke.Color = state and Color3.fromRGB(50, 255, 150) or Color3.fromRGB(138, 43, 226)
-end
 
 btnAuto.MouseButton1Click:Connect(function() if not checkAuto() then return end; AutoPlayEnabled = not AutoPlayEnabled; setVisual(btnAuto, gradAuto, strokeAuto, AutoPlayEnabled, "AUTO PLAY: ON", "AUTO PLAY: OFF"); if AutoPlayEnabled then if AutoPlayDirection == "Right" then AutoRightEnabled = true; startAutoRight() else AutoLeftEnabled = true; startAutoLeft() end else AutoRightEnabled = false; AutoLeftEnabled = false; stopAutoRight(); stopAutoLeft() end end)
 btnGrab.MouseButton1Click:Connect(function() if not checkGrab() then return end; instaGrabEnabled = not instaGrabEnabled; setVisual(btnGrab, gradGrab, strokeGrab, instaGrabEnabled, "AUTO GRAB: ON", "AUTO GRAB: OFF") end)

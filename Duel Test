@@ -490,7 +490,7 @@ end
 
 --// DETIXES HUB UI SETUP //
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MandiHub"
+screenGui.Name = "DetixesHub"
 screenGui.ResetOnSpawn = false
 local success, err = pcall(function() screenGui.Parent = CoreGui:FindFirstChild("RobloxGui") or CoreGui end)
 if not success then screenGui.Parent = player:WaitForChild("PlayerGui") end
@@ -503,7 +503,7 @@ local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.new(0, 55, 0, 55)
 openBtn.Position = UDim2.new(0, 20, 0.5, -27)
 openBtn.BackgroundColor3 = GALAXY_DARK
-openBtn.Text = "M"
+openBtn.Text = "Detixes"
 openBtn.TextColor3 = GALAXY_ACCENT
 openBtn.TextSize = 28
 openBtn.Font = Enum.Font.GothamBold

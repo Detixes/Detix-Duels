@@ -109,7 +109,7 @@ local C_ON_BG   = Color3.fromRGB(55,55,55)
 local C_OFF_BG  = Color3.fromRGB(22,22,22)
 local C_KEY_BG  = Color3.fromRGB(28,28,28)
 
-local LOGO_ID = "rbxassetid://107410467219286"
+local LOGO_ID = "rbxassetid://0"
 task.spawn(function() pcall(function() ContentProvider:PreloadAsync({LOGO_ID}) end) end)
 
 local Anims = {

@@ -495,9 +495,9 @@ screenGui.ResetOnSpawn = false
 local success, err = pcall(function() screenGui.Parent = CoreGui:FindFirstChild("RobloxGui") or CoreGui end)
 if not success then screenGui.Parent = player:WaitForChild("PlayerGui") end
 
-local GALAXY_PURPLE = Color3.fromRGB(160, 32, 240)
-local GALAXY_DARK = Color3.fromRGB(10, 5, 20)
-local GALAXY_ACCENT = Color3.fromRGB(190, 100, 255)
+local GALAXY_PURPLE = Color3.fromRGB(240, 198, 9)
+local GALAXY_DARK = Color3.fromRGB(214, 183, 42)
+local GALAXY_ACCENT = Color3.fromRGB(255, 208, 0)
 
 local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.new(0, 55, 0, 55)

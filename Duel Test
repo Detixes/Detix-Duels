@@ -249,7 +249,7 @@ local function startAutoRight()
                 autoRightPhase = 0
                 hum:Move(Vector3.zero, false)
                 h.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                task.delay(0.00, function() if AutoRightEnabled then autoRightPhase = 3 end end)
+                task.delay(0.05, function() if AutoRightEnabled then autoRightPhase = 3 end end)
                 return
             end
             local md = d.Unit
@@ -301,7 +301,7 @@ local function startAutoLeft()
                 autoLeftPhase = 0
                 hum:Move(Vector3.zero, false)
                 h.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                task.delay(0.00, function() if AutoLeftEnabled then autoLeftPhase = 3 end end)
+                task.delay(0.05, function() if AutoLeftEnabled then autoLeftPhase = 3 end end)
                 return
             end
             local md = d.Unit

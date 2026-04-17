@@ -7,7 +7,7 @@ local ContentProvider = game:GetService("ContentProvider")
 local LP = Players.LocalPlayer
 
 local State = {
-	normalSpeed = 60, carrySpeed = 30,
+	normalSpeed = 122, carrySpeed = 29.8,
 	speedToggled = false, autoBatToggled = false,
 	hittingCooldown = false, infJumpEnabled = false,
 	antiRagdollEnabled = false, fpsBoostEnabled = false,
@@ -1280,34 +1280,49 @@ local function executeSteal(prompt)
 end
 
 startAutoSteal = function()
-	if Conns.autoSteal then return end
-	Conns.autoSteal=RunService.Heartbeat:Connect(function()
-		if not Steal.AutoStealEnabled or State.isStealing then return end
-		local p=findNearestPrompt(); if p then executeSteal(p) end
-	end)
-end
-stopAutoSteal = function()
-	if Conns.autoSteal then Conns.autoSteal:Disconnect(); Conns.autoSteal=nil end
-	State.isStealing=false; State.lastStealTick=0
-	Steal.plotCache={}; Steal.plotCacheTime={}; Steal.cachedPrompts={}; resetProgressBar()
+pcall(function()
+    local rep = game:GetService("ReplicatedStorage")
+    local datas = rep:FindFirstChild("Datas")
+    if datas then
+        local animals = datas:FindFirstChild("Animals")
+        if animals then AnimalsData = require(animals) end
+    end
+end)
+
+local function isMyBase(plotName)
+    local plot = workspace.Plots and workspace.Plots:FindFirstChild(plotName)
+    if not plot then return false end
+    local sign = plot:FindFirstChild("PlotSign")
+    if not sign then return false end
+    local yb = sign:FindFirstChild("YourBase")
+    return yb and yb:IsA("BillboardGui") and yb.Enabled == true
 end
 
-local function getBat()
-	local char=LP.Character; if not char then return nil end
-	local tool=char:FindFirstChild("Bat"); if tool then return tool end
-	local bp2=LP:FindFirstChild("Backpack")
-	if bp2 then tool=bp2:FindFirstChild("Bat"); if tool then tool.Parent=char; return tool end end
-	return nil
-end
-local function tryHitBat()
-	if State.hittingCooldown then return end; State.hittingCooldown=true
-	pcall(function()
-		local bat=getBat(); if bat then
-			bat:Activate(); local ev=bat:FindFirstChildWhichIsA("RemoteEvent")
-			if ev then ev:FireServer() end
-		end
-	end)
-	task.delay(0.08, function() State.hittingCooldown=false end)
+local function scanPlot(plot)
+    if not plot or not plot:IsA("Model") then return end
+    if isMyBase(plot.Name) then return end
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return end
+    for _, pod in ipairs(podiums:GetChildren()) do
+        if pod:IsA("Model") and pod:FindFirstChild("Base") then
+            local name = "Unknown"
+            local spawn = pod.Base:FindFirstChild("Spawn")
+            if spawn then
+                for _, child in ipairs(spawn:GetChildren()) do
+                    if child:IsA("Model") and child.Name ~= "PromptAttachment" then
+                        name = child.Name
+                        local info = AnimalsData[name]
+                        if info and info.DisplayName then name = info.DisplayName end
+                        break
+                    end
+                end
+            end
+            table.insert(animalCache, {
+                name = name, plot = plot.Name, slot = pod.Name,
+                worldPosition = pod:GetPivot().Position, uid = plot.Name .. "*" .. pod.Name,
+            })
+        end
+    end
 end
 
 saveConfig = function()

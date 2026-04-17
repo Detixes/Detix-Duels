@@ -44,7 +44,7 @@ local AutoLeftEnabled  = false
 local autoLeftPhase    = 1
 local autoLeftConn     = nil
 
-local FloatHeight = 10
+local FloatHeight = 8.5
 local floatConn = nil
 local isFloating = false
 
@@ -62,11 +62,11 @@ local AutoPlayDirection = "Right"
 
 local SETTINGS = {
     LOCK_ENABLED = false,
-    LOCK_SPEED = 80,
+    LOCK_SPEED = 56,
 }
 
 -- Logic Variables
-local fovOn, galaxyOn, antiBatOn, antiFlingOn = false, false, false, false
+local islandOn, galaxyOn, antiBatOn, antiFlingOn = false, false, false, false
 local detectDistance = 15
 local defBrightness, defClock, defAmbient = Lighting.Brightness, Lighting.ClockTime, Lighting.OutdoorAmbient
 local menuOpen = false
@@ -557,7 +557,7 @@ local function createToggle(text)
     return frame, indicator, switchBase
 end
 
-local fovToggle, fovInd, fovBase = createToggle("Desync")
+local islandToggle, islandInd, islandBase = createToggle("Island")
 local galaxyToggle, galInd, galBase = createToggle("Galaxy Sky")
 local antiBatToggle, batInd, batBase = createToggle("Bat-Anti")
 local antiFlingToggle, fliInd, fliBase = createToggle("Fling-Anti")
@@ -634,7 +634,7 @@ openBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-fovToggle.MouseButton1Click:Connect(function()
+islandToggle.MouseButton1Click:Connect(function()
     print("TEST")
 end)
 
@@ -689,7 +689,7 @@ UserInputService.JumpRequest:Connect(function() if infinityJumpEnabled and playe
 
 saveBtn.MouseButton1Click:Connect(function()
     if writefile then
-        local data = { FOV = fovOn, Galaxy = galaxyOn, AntiBat = antiBatOn, AntiFling = antiFlingOn, InfJump = infinityJumpEnabled, NoAnim = noAnimToggled, BtnX = openBtn.Position.X.Scale, BtnOffsetX = openBtn.Position.X.Offset, BtnY = openBtn.Position.Y.Scale, BtnOffsetY = openBtn.Position.Y.Offset }
+        local data = { ISLAND = islandOn, Galaxy = galaxyOn, AntiBat = antiBatOn, AntiFling = antiFlingOn, InfJump = infinityJumpEnabled, NoAnim = noAnimToggled, BtnX = openBtn.Position.X.Scale, BtnOffsetX = openBtn.Position.X.Offset, BtnY = openBtn.Position.Y.Scale, BtnOffsetY = openBtn.Position.Y.Offset }
         writefile(FILE_NAME, HttpService:JSONEncode(data)); saveBtn.Text = "SAVED!"; task.wait(0.5); saveBtn.Text = "SAVE CONFIG"
     end
 end)
@@ -698,13 +698,12 @@ if isfile and isfile(FILE_NAME) then
     local s, d = pcall(function() return HttpService:JSONDecode(readfile(FILE_NAME)) end)
     if s and d then
         if d.BtnX then openBtn.Position = UDim2.new(d.BtnX, d.BtnOffsetX, d.BtnY, d.BtnOffsetY) end
-        fovOn, galaxyOn, antiBatOn, antiFlingOn, infinityJumpEnabled, noAnimToggled = d.FOV or false, d.Galaxy or false, d.AntiBat or false, d.AntiFling or false, d.InfJump or false, d.NoAnim or false
-        camera.FieldOfView = fovOn and 100 or 70
+        islandOn, galaxyOn, antiBatOn, antiFlingOn, infinityJumpEnabled, noAnimToggled = d.island or false, d.Galaxy or false, d.AntiBat or false, d.AntiFling or false, d.InfJump or false, d.NoAnim 
         if galaxyOn then 
             local sky = Lighting:FindFirstChild("GalaxySky") or Instance.new("Sky"); sky.Name = "GalaxySky"; sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = "rbxassetid://159454299", "rbxassetid://159454296", "rbxassetid://159454293", "rbxassetid://159454286", "rbxassetid://159454289", "rbxassetid://159454291"; sky.Parent = Lighting; Lighting.Brightness, Lighting.ClockTime, Lighting.ExposureCompensation = 0, 0, -2; Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
         end
         if noAnimToggled then startNoAnim() end
-        updateVisual(fovOn, fovInd, fovBase); updateVisual(galaxyOn, galInd, galBase); updateVisual(antiBatOn, batInd, batBase); updateVisual(antiFlingOn, fliInd, fliBase); updateVisual(infinityJumpEnabled, jumpInd, jumpBase); updateVisual(noAnimToggled, noAnimInd, noAnimBase)
+        updateVisual(islandOn, islandInd, islandBase); updateVisual(galaxyOn, galInd, galBase); updateVisual(antiBatOn, batInd, batBase); updateVisual(antiFlingOn, fliInd, fliBase); updateVisual(infinityJumpEnabled, jumpInd, jumpBase); updateVisual(noAnimToggled, noAnimInd, noAnimBase)
     end
 end
 
@@ -714,4 +713,4 @@ destroyAllAccessories()
 task.spawn(function()
     task.wait(2); local plots = workspace:WaitForChild("Plots", 10); if plots then for _, plot in ipairs(plots:GetChildren()) do if plot:IsA("Model") then scanPlot(plot) end end; plots.ChildAdded:Connect(function(plot) if plot:IsA("Model") then task.wait(0.5); scanPlot(plot) end end) end
 end)
-print("[Detixes Active // https://discord.gg/YqWgQsjf3]")
+print("[Detixes Duels Active // https://discord.gg/YqWgQsjf3]")

@@ -337,13 +337,13 @@ logo.BackgroundTransparency=1; logo.Image=LOGO_ID; logo.ScaleType=Enum.ScaleType
 
 local titleLbl = Instance.new("TextLabel",header)
 titleLbl.Size=UDim2.new(0,160,0,22); titleLbl.Position=UDim2.new(0,66,0,11)
-titleLbl.BackgroundTransparency=1; titleLbl.Text="VYSE SLOTTED"
+titleLbl.BackgroundTransparency=1; titleLbl.Text="Detixes Hub | Premium"
 titleLbl.TextColor3=C_WHITE; titleLbl.Font=Enum.Font.GothamBlack; titleLbl.TextSize=15
 titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=6
 
 local subLbl = Instance.new("TextLabel",header)
 subLbl.Size=UDim2.new(0,160,0,14); subLbl.Position=UDim2.new(0,67,0,35)
-subLbl.BackgroundTransparency=1; subLbl.Text="by xeno"
+subLbl.BackgroundTransparency=1; subLbl.Text="By @Detixes on TikTok/Discord "
 subLbl.TextColor3=C_DIM; subLbl.Font=Enum.Font.Gotham; subLbl.TextSize=11
 subLbl.TextXAlignment=Enum.TextXAlignment.Left; subLbl.ZIndex=6
 
@@ -643,7 +643,7 @@ makeGap(8)
 
 local footerLbl = Instance.new("TextLabel",scroll)
 footerLbl.Size=UDim2.new(1,0,0,18); footerLbl.BackgroundTransparency=1; footerLbl.LayoutOrder=LO()
-footerLbl.Text="vyse.cc  ·  v2.0"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
+footerLbl.Text="https://discord.gg/YqWgQsjf3 | Join us Today"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
 footerLbl.Font=Enum.Font.Gotham; footerLbl.TextSize=10; footerLbl.TextXAlignment=Enum.TextXAlignment.Center
 
 local mini = Instance.new("TextButton",gui)

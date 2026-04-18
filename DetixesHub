@@ -7,7 +7,7 @@ local ContentProvider = game:GetService("ContentProvider")
 local LP = Players.LocalPlayer
 
 local State = {
-	normalSpeed = 82.6, carrySpeed = 29.8,
+	normalSpeed = 60, carrySpeed = 30,
 	speedToggled = false, autoBatToggled = false,
 	hittingCooldown = false, infJumpEnabled = false,
 	antiRagdollEnabled = false, fpsBoostEnabled = false,
@@ -36,7 +36,7 @@ local Keys = {
 }
 
 local Steal = {
-	AutoStealEnabled = false, StealRadius = 9, StealDuration = 0.25,
+	AutoStealEnabled = false, StealRadius = 20, StealDuration = 0.25,
 	Data = {}, plotCache = {}, plotCacheTime = {},
 	cachedPrompts = {}, promptCacheTime = 0,
 }
@@ -109,7 +109,7 @@ local C_ON_BG   = Color3.fromRGB(55,55,55)
 local C_OFF_BG  = Color3.fromRGB(22,22,22)
 local C_KEY_BG  = Color3.fromRGB(28,28,28)
 
-local LOGO_ID = "rbxassetid://0"
+local LOGO_ID = "rbxassetid://120042443836261"
 task.spawn(function() pcall(function() ContentProvider:PreloadAsync({LOGO_ID}) end) end)
 
 local Anims = {
@@ -271,7 +271,7 @@ end
 
 local Camera = workspace.CurrentCamera
 
-for _, name in pairs({"DetixesHubGUI"}) do
+for _, name in pairs({"VyseSlottedGUI"}) do
 	local old = game:GetService("CoreGui"):FindFirstChild(name)
 	if old then old:Destroy() end
 end
@@ -307,7 +307,7 @@ local function makeDraggable(frame, shadowFrame, isMain)
 end
 
 local gui = Instance.new("ScreenGui")
-gui.Name="DetixesHubGUI"; gui.ResetOnSpawn=false; gui.DisplayOrder=10
+gui.Name="VyseSlottedGUI"; gui.ResetOnSpawn=false; gui.DisplayOrder=10
 gui.IgnoreGuiInset=true; gui.Parent=LP:WaitForChild("PlayerGui")
 local shadow = Instance.new("Frame",gui)
 shadow.Size=UDim2.new(0,316,0,606); shadow.Position=UDim2.new(0,17,0,17)
@@ -337,13 +337,13 @@ logo.BackgroundTransparency=1; logo.Image=LOGO_ID; logo.ScaleType=Enum.ScaleType
 
 local titleLbl = Instance.new("TextLabel",header)
 titleLbl.Size=UDim2.new(0,160,0,22); titleLbl.Position=UDim2.new(0,66,0,11)
-titleLbl.BackgroundTransparency=1; titleLbl.Text="Detixes Hub"
+titleLbl.BackgroundTransparency=1; titleLbl.Text="VYSE SLOTTED"
 titleLbl.TextColor3=C_WHITE; titleLbl.Font=Enum.Font.GothamBlack; titleLbl.TextSize=15
 titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=6
 
 local subLbl = Instance.new("TextLabel",header)
 subLbl.Size=UDim2.new(0,160,0,14); subLbl.Position=UDim2.new(0,67,0,35)
-subLbl.BackgroundTransparency=1; subLbl.Text="by @Detixes on TikTok/Discord"
+subLbl.BackgroundTransparency=1; subLbl.Text="by xeno"
 subLbl.TextColor3=C_DIM; subLbl.Font=Enum.Font.Gotham; subLbl.TextSize=11
 subLbl.TextXAlignment=Enum.TextXAlignment.Left; subLbl.ZIndex=6
 
@@ -643,11 +643,11 @@ makeGap(8)
 
 local footerLbl = Instance.new("TextLabel",scroll)
 footerLbl.Size=UDim2.new(1,0,0,18); footerLbl.BackgroundTransparency=1; footerLbl.LayoutOrder=LO()
-footerLbl.Text="https://discord.gg/YqWgQsjf3"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
+footerLbl.Text="vyse.cc  ·  v2.0"; footerLbl.TextColor3=Color3.fromRGB(50,50,50)
 footerLbl.Font=Enum.Font.Gotham; footerLbl.TextSize=10; footerLbl.TextXAlignment=Enum.TextXAlignment.Center
 
 local mini = Instance.new("TextButton",gui)
-mini.Name="DetixesMini"; mini.Size=UDim2.new(0,110,0,30); mini.Position=UDim2.new(0,20,0,20)
+mini.Name="VyseMini"; mini.Size=UDim2.new(0,110,0,30); mini.Position=UDim2.new(0,20,0,20)
 mini.BackgroundColor3=C_PANEL; mini.BorderSizePixel=0; mini.Text=""; mini.ZIndex=20; mini.Visible=false
 Instance.new("UICorner",mini).CornerRadius=UDim.new(0,7); Instance.new("UIStroke",mini).Color=C_BORDER2
 local miniLogo = Instance.new("ImageLabel",mini)
@@ -655,7 +655,7 @@ miniLogo.Size=UDim2.new(0,20,0,20); miniLogo.Position=UDim2.new(0,6,0.5,-10)
 miniLogo.BackgroundTransparency=1; miniLogo.Image=LOGO_ID; miniLogo.ScaleType=Enum.ScaleType.Fit; miniLogo.ZIndex=21
 local miniTxt = Instance.new("TextLabel",mini)
 miniTxt.Size=UDim2.new(1,-34,1,0); miniTxt.Position=UDim2.new(0,32,0,0)
-miniTxt.BackgroundTransparency=1; miniTxt.Text="Detixes"; miniTxt.TextColor3=C_ACCENT
+miniTxt.BackgroundTransparency=1; miniTxt.Text="Vyse"; miniTxt.TextColor3=C_ACCENT
 miniTxt.Font=Enum.Font.GothamBold; miniTxt.TextSize=12; miniTxt.TextXAlignment=Enum.TextXAlignment.Left; miniTxt.ZIndex=21
 mini.MouseButton1Click:Connect(function() State.guiVisible=true; main.Visible=true; shadow.Visible=true; mini.Visible=false end)
 mini.MouseEnter:Connect(function() TweenService:Create(mini,TweenInfo.new(0.1),{BackgroundColor3=C_ROW}):Play() end)
@@ -1280,49 +1280,34 @@ local function executeSteal(prompt)
 end
 
 startAutoSteal = function()
-pcall(function()
-    local rep = game:GetService("ReplicatedStorage")
-    local datas = rep:FindFirstChild("Datas")
-    if datas then
-        local animals = datas:FindFirstChild("Animals")
-        if animals then AnimalsData = require(animals) end
-    end
-end)
-
-local function isMyBase(plotName)
-    local plot = workspace.Plots and workspace.Plots:FindFirstChild(plotName)
-    if not plot then return false end
-    local sign = plot:FindFirstChild("PlotSign")
-    if not sign then return false end
-    local yb = sign:FindFirstChild("YourBase")
-    return yb and yb:IsA("BillboardGui") and yb.Enabled == true
+	if Conns.autoSteal then return end
+	Conns.autoSteal=RunService.Heartbeat:Connect(function()
+		if not Steal.AutoStealEnabled or State.isStealing then return end
+		local p=findNearestPrompt(); if p then executeSteal(p) end
+	end)
+end
+stopAutoSteal = function()
+	if Conns.autoSteal then Conns.autoSteal:Disconnect(); Conns.autoSteal=nil end
+	State.isStealing=false; State.lastStealTick=0
+	Steal.plotCache={}; Steal.plotCacheTime={}; Steal.cachedPrompts={}; resetProgressBar()
 end
 
-local function scanPlot(plot)
-    if not plot or not plot:IsA("Model") then return end
-    if isMyBase(plot.Name) then return end
-    local podiums = plot:FindFirstChild("AnimalPodiums")
-    if not podiums then return end
-    for _, pod in ipairs(podiums:GetChildren()) do
-        if pod:IsA("Model") and pod:FindFirstChild("Base") then
-            local name = "Unknown"
-            local spawn = pod.Base:FindFirstChild("Spawn")
-            if spawn then
-                for _, child in ipairs(spawn:GetChildren()) do
-                    if child:IsA("Model") and child.Name ~= "PromptAttachment" then
-                        name = child.Name
-                        local info = AnimalsData[name]
-                        if info and info.DisplayName then name = info.DisplayName end
-                        break
-                    end
-                end
-            end
-            table.insert(animalCache, {
-                name = name, plot = plot.Name, slot = pod.Name,
-                worldPosition = pod:GetPivot().Position, uid = plot.Name .. "*" .. pod.Name,
-            })
-        end
-    end
+local function getBat()
+	local char=LP.Character; if not char then return nil end
+	local tool=char:FindFirstChild("Bat"); if tool then return tool end
+	local bp2=LP:FindFirstChild("Backpack")
+	if bp2 then tool=bp2:FindFirstChild("Bat"); if tool then tool.Parent=char; return tool end end
+	return nil
+end
+local function tryHitBat()
+	if State.hittingCooldown then return end; State.hittingCooldown=true
+	pcall(function()
+		local bat=getBat(); if bat then
+			bat:Activate(); local ev=bat:FindFirstChildWhichIsA("RemoteEvent")
+			if ev then ev:FireServer() end
+		end
+	end)
+	task.delay(0.08, function() State.hittingCooldown=false end)
 end
 
 saveConfig = function()
@@ -1340,16 +1325,16 @@ saveConfig = function()
 		guiHideKey=Keys.guiHide.Name, floatKey=Keys.float.Name, floatHeight=State.floatHeight,
 		animEnabled=State.animEnabled, unwalkEnabled=State.unwalkEnabled,
 	}
-	local ok=pcall(function() writefile("DetixesHubConfig.json",HttpService:JSONEncode(cfg)) end)
+	local ok=pcall(function() writefile("VyseSlottedConfig.json",HttpService:JSONEncode(cfg)) end)
 	if ok then
 		local prev=saveBtn.Text; saveBtn.Text="Saved!"; task.wait(1.5); saveBtn.Text=prev
 	else saveBtn.Text="Failed!"; task.wait(1.5); saveBtn.Text="Save Config" end
 end
 
 local function loadConfig()
-	local hasFile=false; pcall(function() hasFile=isfile("DetixesHubConfig.json") end)
+	local hasFile=false; pcall(function() hasFile=isfile("VyseSlottedConfig.json") end)
 	if not hasFile then return end
-	local ok,cfg=pcall(function() return HttpService:JSONDecode(readfile("DetixesHubConfig.json")) end)
+	local ok,cfg=pcall(function() return HttpService:JSONDecode(readfile("VyseSlottedConfig.json")) end)
 	if not ok or not cfg then return end
 	if cfg.normalSpeed and type(cfg.normalSpeed)=="number" then State.normalSpeed=cfg.normalSpeed; normalBox.Text=tostring(cfg.normalSpeed) end
 	if cfg.carrySpeed  and type(cfg.carrySpeed)=="number"  then State.carrySpeed=cfg.carrySpeed;   carryBox.Text=tostring(cfg.carrySpeed)   end
@@ -1574,4 +1559,4 @@ task.spawn(function()
 end)
 
 loadConfig()
-print("[Detixes Duels // Fully Loaded...]")
+print("[Vyse Slotted] Loaded!")

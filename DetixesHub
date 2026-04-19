@@ -1474,9 +1474,13 @@ local function getClosestPlayer()
 	if cp and cp.Character then
 		local targetHRP = cp.Character:FindFirstChild("HumanoidRootPart")
 		if targetHRP and hrp then
-			hrp.CFrame = CFrame.lookAt(hrp.Position, targetHRP.Position)
+			local lookPos = Vector3.new(targetHRP.Position.X, hrp.Position.Y, targetHRP.Position.Z)
+			hrp.CFrame = CFrame.new(hrp.Position, lookPos)
 		end
 	end
+	
+	return cp,cd
+end
 	
 	return cp,cd
 end

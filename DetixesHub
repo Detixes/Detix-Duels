@@ -1470,32 +1470,22 @@ local function getClosestPlayer()
 		end
 	end
 	
-	-- ADDITION: stop humanoid from overriding rotation
-	local humanoid = hrp.Parent:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.AutoRotate = false
-	end
-	
-	-- ADDITION: rotate toward closest player
+	-- ADDITION: rotate character safely (no reset)
 	if cp and cp.Character then
 		local targetHRP = cp.Character:FindFirstChild("HumanoidRootPart")
-		if targetHRP and hrp then
-			local lookPos = Vector3.new(targetHRP.Position.X, hrp.Position.Y, targetHRP.Position.Z)
-			hrp.CFrame = CFrame.new(hrp.Position, lookPos)
+		local character = hrp.Parent
+		
+		if targetHRP and character then
+			local pos = character:GetPivot().Position
+			local lookPos = Vector3.new(targetHRP.Position.X, pos.Y, targetHRP.Position.Z)
+			
+			character:PivotTo(CFrame.new(pos, lookPos))
 		end
 	end
 	
 	return cp,cd
 end
 	
-	return cp,cd
-end
-	
-	return cp,cd
-end
-	
-	return cp,cd
-end
 
 RunService.Heartbeat:Connect(function()
 	if not (State.autoBatToggled and h and hrp) then return end

@@ -1469,6 +1469,15 @@ local function getClosestPlayer()
 			if tr then local d=(hrp.Position-tr.Position).Magnitude; if d<cd then cd=d; cp=p end end
 		end
 	end
+	
+	-- Look at nearest too
+	if cp and cp.Character then
+		local targetHRP = cp.Character:FindFirstChild("HumanoidRootPart")
+		if targetHRP and hrp then
+			hrp.CFrame = CFrame.lookAt(hrp.Position, targetHRP.Position)
+		end
+	end
+	
 	return cp,cd
 end
 

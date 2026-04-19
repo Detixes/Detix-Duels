@@ -1470,19 +1470,6 @@ local function getClosestPlayer()
 		end
 	end
 	
-	-- ADDITION: rotate character safely (no reset)
-	if cp and cp.Character then
-		local targetHRP = cp.Character:FindFirstChild("HumanoidRootPart")
-		local character = hrp.Parent
-		
-		if targetHRP and character then
-			local pos = character:GetPivot().Position
-			local lookPos = Vector3.new(targetHRP.Position.X, pos.Y, targetHRP.Position.Z)
-			
-			character:PivotTo(CFrame.new(pos, lookPos))
-		end
-	end
-	
 	return cp,cd
 end
 	

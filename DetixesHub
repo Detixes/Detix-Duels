@@ -1469,10 +1469,8 @@ local function getClosestPlayer()
 			if tr then local d=(hrp.Position-tr.Position).Magnitude; if d<cd then cd=d; cp=p end end
 		end
 	end
-	
 	return cp,cd
 end
-	
 
 RunService.Heartbeat:Connect(function()
 	if not (State.autoBatToggled and h and hrp) then return end

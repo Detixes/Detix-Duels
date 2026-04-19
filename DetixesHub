@@ -1470,14 +1470,22 @@ local function getClosestPlayer()
 		end
 	end
 	
-	-- Look at nearest too
+	-- Look at nearest
 	if cp and cp.Character then
 		local targetHRP = cp.Character:FindFirstChild("HumanoidRootPart")
-		if targetHRP and hrp then
-			local lookPos = Vector3.new(targetHRP.Position.X, hrp.Position.Y, targetHRP.Position.Z)
-			hrp.CFrame = CFrame.new(hrp.Position, lookPos)
+		local humanoid = hrp.Parent:FindFirstChildOfClass("Humanoid")
+		
+		if targetHRP and humanoid then
+			local direction = (targetHRP.Position - hrp.Position).Unit
+			local lookCFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(direction.X, 0, direction.Z))
+			
+			humanoid:Move(Vector3.zero) -- prevents movement interference
+			hrp.CFrame = lookCFrame
 		end
 	end
+	
+	return cp,cd
+end
 	
 	return cp,cd
 end

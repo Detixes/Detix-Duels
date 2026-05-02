@@ -1,6 +1,11 @@
 --// SERVICES
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local SoundService = game:GetService("SoundService")
+
+--// SOUND IDS
+local CLICK_SOUND_ID = "rbxassetid://75311202481026"
+local CONFIRM_SOUND_ID = "rbxassetid://83245966620103"
 
 --// TRADE UI
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
@@ -14,6 +19,17 @@ local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
+--// BASE SLOTS
+local baseSlots = tradeUI:WaitForChild("TradeLiveTrade"):WaitForChild("BaseSlots")
+
+local function setSlots(value)
+	if baseSlots and baseSlots:IsA("TextLabel") then
+		baseSlots.Text = value
+	end
+end
+
+setSlots("10/26")
+
 --// CONFIRMATION UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
@@ -24,7 +40,7 @@ local description = content:WaitForChild("Description")
 local yesButton = warningTemplate:WaitForChild("Yes")
 local noButton = warningTemplate:WaitForChild("No")
 
---// NOTIFICATION UI (FIXED SAFE LOAD)
+--// NOTIFICATION UI
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
@@ -45,7 +61,7 @@ title.Text = "Test"
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
---// ADD IMAGE
+--// IMAGE
 if not spacer:FindFirstChild("CustomImage") then
 	local image = Instance.new("ImageLabel")
 	image.Name = "CustomImage"
@@ -54,6 +70,16 @@ if not spacer:FindFirstChild("CustomImage") then
 	image.Image = "rbxassetid://139291316302932"
 	image.Size = UDim2.new(0.5, 0, 0.5, 0)
 	image.Position = UDim2.new(0.25, 0, 0.25, 0)
+end
+
+--// SOUND FUNCTION
+local function playSound(id)
+	local sound = Instance.new("Sound")
+	sound.SoundId = id
+	sound.Volume = 1
+	sound.Parent = SoundService
+	sound:Play()
+	game:GetService("Debris"):AddItem(sound, 3)
 end
 
 --// LOCK OTHER UI ELEMENTS
@@ -71,18 +97,14 @@ local function enforceVisibility()
 	end
 end
 
+--// FORCE TEMPLATE VISIBLE ON LOAD
+template.Visible = true
+
 enforceVisibility()
 
 scrollingFrame.ChildAdded:Connect(function()
 	task.wait()
 	enforceVisibility()
-end)
-
-task.spawn(function()
-	while true do
-		enforceVisibility()
-		task.wait(0.05)
-	end
 end)
 
 --// STATE
@@ -93,36 +115,25 @@ end
 
 local clicked = false
 
---// CLIPBOARD SAFE
-local function copyToClipboard(text)
-	pcall(function()
-		if setclipboard then
-			setclipboard(text)
-		end
-	end)
-end
-
---// NOTIFICATION SYSTEM (SAFE + NO INFINITE YIELD)
+--// NOTIFICATION (FIXED TEXT ISSUE)
 local function showNotification(text, color)
 	local template = notificationUI:FindFirstChild("Template")
 	if not template then
 		template = notificationUI:WaitForChild("Template", 3)
 	end
 
-	if not template then
-		warn("Notification Template missing")
-		copyToClipboard("Notification Template missing")
-		return
-	end
+	if not template then return end
 
 	local clone = template:Clone()
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	local txt = clone:FindFirstChildWhichIsA("TextLabel", true)
-	if txt then
-		txt.Text = text
-		txt.TextColor3 = color
+	-- FIX: force ALL text labels to update (fixes white default bug)
+	for _, obj in ipairs(clone:GetDescendants()) do
+		if obj:IsA("TextLabel") then
+			obj.Text = text
+			obj.TextColor3 = color
+		end
 	end
 
 	task.delay(3, function()
@@ -132,9 +143,13 @@ local function showNotification(text, color)
 	end)
 end
 
---// OPEN CONFIRMATION
-spacer.InputBegan:Connect(function(input)
+--// TEMPLATE CLICK (add item)
+template.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		playSound(CLICK_SOUND_ID)
+
+		setSlots("9/26")
+
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
 	end
@@ -142,6 +157,8 @@ end)
 
 --// YES BUTTON
 yesButton.MouseButton1Click:Connect(function()
+	playSound(CONFIRM_SOUND_ID)
+
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
@@ -152,42 +169,17 @@ yesButton.MouseButton1Click:Connect(function()
 		stroke.Color = strokeClickedColor
 	end
 
-	showNotification(
-		"Sucessfully added 'Admin Commands' to trade!",
-		Color3.fromRGB(0, 255, 0)
-	)
+	showNotification("Successfully added item to trade!", Color3.fromRGB(0, 255, 0))
 end)
 
 --// NO BUTTON
 noButton.MouseButton1Click:Connect(function()
+	playSound(CONFIRM_SOUND_ID)
+
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	local failClone = notifTemplate and notifTemplate:Clone()
-
-	if not failClone then
-		warn("Template missing for fail notification")
-		copyToClipboard("Failed to add Gamepass")
-		return
-	end
-
-	failClone.Name = "Fail"
-	failClone.Parent = notificationUI
-	failClone.Visible = true
-
-	local txt = failClone:FindFirstChildWhichIsA("TextLabel", true)
-	if txt then
-		txt.Text = "Failed to add Gamepass"
-		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
-	end
-
-	copyToClipboard("Failed to add Gamepass")
-
-	task.delay(3, function()
-		if failClone then
-			failClone:Destroy()
-		end
-	end)
+	showNotification("Failed to add item", Color3.fromRGB(255, 0, 0))
 end)
 
 --// RESET UI ON CLOSE
@@ -199,5 +191,7 @@ tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 		if stroke then
 			stroke.Color = Color3.fromRGB(0, 0, 0)
 		end
+
+		setSlots("10/26")
 	end
 end)

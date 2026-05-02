@@ -104,7 +104,7 @@ end
 
 local clicked = false
 
---// ⭐ FIXED NOTIFICATION SYSTEM (REAL FIX)
+--// ⭐ FINAL NOTIFICATION FIX
 local function showNotification(text, color)
 	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
 
@@ -112,13 +112,22 @@ local function showNotification(text, color)
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	-- FIXED TEXT TARGETING
-	local txt = clone:FindFirstChild("Text", true)
-	if not txt then
-		for _, v in ipairs(clone:GetDescendants()) do
-			if v:IsA("TextLabel") then
-				txt = v
-				break
+	local txt = nil
+
+	-- CASE 1: Template itself is a TextLabel
+	if clone:IsA("TextLabel") then
+		txt = clone
+	else
+		-- CASE 2: Try named "Text"
+		txt = clone:FindFirstChild("Text", true)
+
+		-- CASE 3: fallback scan
+		if not txt then
+			for _, v in ipairs(clone:GetDescendants()) do
+				if v:IsA("TextLabel") then
+					txt = v
+					break
+				end
 			end
 		end
 	end
@@ -127,7 +136,7 @@ local function showNotification(text, color)
 		txt.Text = text
 		txt.TextColor3 = color
 	else
-		warn("No TextLabel found in notification clone")
+		warn("Notification text object not found")
 	end
 
 	task.delay(5, function()
@@ -207,7 +216,14 @@ noButton.MouseButton1Click:Connect(function()
 	failClone.Parent = notificationUI
 	failClone.Visible = true
 
-	local txt = failClone:FindFirstChild("Text", true)
+	local txt = nil
+
+	if failClone:IsA("TextLabel") then
+		txt = failClone
+	else
+		txt = failClone:FindFirstChild("Text", true)
+	end
+
 	if txt then
 		txt.Text = "Failed to add Gamepass"
 		txt.TextColor3 = Color3.fromRGB(255, 0, 0)

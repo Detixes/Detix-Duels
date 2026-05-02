@@ -2,12 +2,14 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// TRADE UI
+--// TRADE UI (FIXED PATH)
 local tradeRoot = playerGui:WaitForChild("TradeLiveTrade")
 local tradeUI = tradeRoot:WaitForChild("TradeLiveTrade")
 
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
+
+local baseSlots = tradeUI:WaitForChild("BaseSlots")
 
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
@@ -15,9 +17,6 @@ local spacer = template:WaitForChild("Spacer")
 local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
-
---// BASE SLOTS
-local baseSlots = tradeUI:WaitForChild("BaseSlots")
 
 --// CONFIRMATION UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
@@ -33,18 +32,33 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:WaitForChild("Template", 5)
+local notifTemplate = notificationUI:FindFirstChild("Template") 
+	or notificationUI:WaitForChild("Template", 5)
 
 --// COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
---// INIT
+--// SOUND SYSTEM
+local function playSound(id, parent)
+	local sound = Instance.new("Sound")
+	sound.SoundId = id
+	sound.Volume = 1
+	sound.Parent = parent or workspace
+	sound:Play()
+
+	game:GetService("Debris"):AddItem(sound, 3)
+end
+
+--// INIT UI
 cash.Text = "0/s"
 title.Text = "Test"
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+-- ensure template visible on load
+template.Visible = true
 
 --// IMAGE
 if not spacer:FindFirstChild("CustomImage") then
@@ -57,31 +71,13 @@ if not spacer:FindFirstChild("CustomImage") then
 	image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
---// SOUND FUNCTION
-local function playSound(id)
-	local sound = Instance.new("Sound")
-	sound.SoundId = id
-	sound.Volume = 1
-	sound.Parent = tradeUI
-	sound:Play()
-	game:GetService("Debris"):AddItem(sound, 3)
-end
+--// BASE SLOT SYSTEM
+local DEFAULT_SLOTS = "10/26"
+local USED_SLOTS = "9/26"
 
---// BASE SLOT STATE
-local maxSlots = 26
-local currentSlots = 10
+baseSlots.Text = DEFAULT_SLOTS
 
-local function updateSlots()
-	baseSlots.Text = tostring(currentSlots) .. "/" .. tostring(maxSlots)
-end
-
-updateSlots()
-
---// FORCE TEMPLATE VISIBLE
-template.Visible = true
-spacer.Visible = true
-
---// LOCK OTHER UI ELEMENTS
+--// LOCK UI ELEMENTS
 local function enforceVisibility()
 	for _, v in ipairs(scrollingFrame:GetChildren()) do
 		if v ~= template and v:IsA("GuiObject") then
@@ -111,12 +107,12 @@ task.spawn(function()
 end)
 
 --// STATE
+local clicked = false
 spacer.BackgroundColor3 = defaultColor
+
 if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
 end
-
-local clicked = false
 
 --// CLIPBOARD SAFE
 local function copyToClipboard(text)
@@ -127,21 +123,18 @@ local function copyToClipboard(text)
 	end)
 end
 
---// NOTIFICATION SYSTEM (FIXED TEXT)
+--// NOTIFICATIONS (FIXED TEXT ISSUE)
 local function showNotification(text, color)
-	local template = notificationUI:FindFirstChild("Template")
-	if not template then return end
+	if not notifTemplate then return end
 
-	local clone = template:Clone()
+	local clone = notifTemplate:Clone()
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	local label = clone:FindFirstChildWhichIsA("TextLabel", true)
-	if label then
-		label.Text = text
-		label.TextColor3 = color
-	else
-		clone.Text = text -- fallback
+	local txt = clone:FindFirstChildWhichIsA("TextLabel", true)
+	if txt then
+		txt.Text = tostring(text)
+		txt.TextColor3 = color
 	end
 
 	task.delay(3, function()
@@ -151,10 +144,10 @@ local function showNotification(text, color)
 	end)
 end
 
---// TEMPLATE CLICK
+--// TEMPLATE CLICK (FIXED + SOUND + SLOT UPDATE)
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		playSound("rbxassetid://75311202481026")
+		playSound("rbxassetid://75311202481026", workspace)
 
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
@@ -163,7 +156,7 @@ end)
 
 --// YES BUTTON
 yesButton.MouseButton1Click:Connect(function()
-	playSound("rbxassetid://83245966620103")
+	playSound("rbxassetid://83245966620103", workspace)
 
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -175,47 +168,22 @@ yesButton.MouseButton1Click:Connect(function()
 		stroke.Color = strokeClickedColor
 	end
 
-	-- decrease slots
-	if currentSlots > 0 then
-		currentSlots -= 1
-		updateSlots()
-	end
+	baseSlots.Text = USED_SLOTS
 
-	showNotification(
-		"Successfully added 'Admin Commands' to trade!",
-		Color3.fromRGB(0, 255, 0)
-	)
+	showNotification("Successfully added 'Admin Commands' to trade!", Color3.fromRGB(0, 255, 0))
 end)
 
 --// NO BUTTON
 noButton.MouseButton1Click:Connect(function()
-	playSound("rbxassetid://83245966620103")
+	playSound("rbxassetid://83245966620103", workspace)
 
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	local failClone = notifTemplate and notifTemplate:Clone()
-	if not failClone then return end
-
-	failClone.Parent = notificationUI
-	failClone.Visible = true
-
-	local txt = failClone:FindFirstChildWhichIsA("TextLabel", true)
-	if txt then
-		txt.Text = "Failed to add Gamepass"
-		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
-	end
-
-	copyToClipboard("Failed to add Gamepass")
-
-	task.delay(3, function()
-		if failClone then
-			failClone:Destroy()
-		end
-	end)
+	showNotification("Failed to add Gamepass", Color3.fromRGB(255, 0, 0))
 end)
 
---// RESET ON UI CLOSE
+--// RESET ON CLOSE
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
 		clicked = false
@@ -225,8 +193,6 @@ tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 			stroke.Color = Color3.fromRGB(0, 0, 0)
 		end
 
-		-- reset slots
-		currentSlots = 10
-		updateSlots()
+		baseSlots.Text = DEFAULT_SLOTS
 	end
 end)

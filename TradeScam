@@ -1,0 +1,170 @@
+-- Services
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Paths
+local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
+local yourFrame = tradeUI:WaitForChild("Your")
+local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
+
+local template = scrollingFrame:WaitForChild("Template")
+local spacer = template:WaitForChild("Spacer")
+
+local cash = spacer:WaitForChild("Cash")
+local title = spacer:WaitForChild("Title")
+local stroke = spacer:FindFirstChildOfClass("UIStroke")
+
+-- Confirmation UI
+local confirmation = playerGui:WaitForChild("Confirmation")
+local warningTemplate = confirmation:WaitForChild("WarningTemplate")
+local content = warningTemplate:WaitForChild("Content")
+local yesButton = content:WaitForChild("Yes")
+local noButton = content:WaitForChild("No")
+local description = content:WaitForChild("Description")
+
+-- Notification UI
+local notification = playerGui:WaitForChild("Notification")
+local notifTemplate = notification:WaitForChild("Template")
+
+-- Colors
+local defaultColor = Color3.fromRGB(35, 45, 50)
+local clickedColor = Color3.fromRGB(15, 50, 60)
+local strokeClickedColor = Color3.fromRGB(0, 0, 70)
+
+-- Set description text on load
+description.Text = "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+-- Apply UI edits
+cash.Text = "0/s"
+title.Text = "Test"
+
+-- Add image once
+if not spacer:FindFirstChild("CustomImage") then
+    local image = Instance.new("ImageLabel")
+    image.Name = "CustomImage"
+    image.Parent = spacer
+    image.BackgroundTransparency = 1
+    image.Image = "rbxassetid://139291316302932"
+    image.Size = UDim2.new(0.5, 0, 0.5, 0)
+    image.Position = UDim2.new(0.25, 0, 0.25, 0)
+end
+
+-- Hide everything except template
+local function enforceVisibility()
+    for _, v in ipairs(scrollingFrame:GetChildren()) do
+        if v ~= template and v:IsA("GuiObject") then
+            v.Visible = false
+            v:GetPropertyChangedSignal("Visible"):Connect(function()
+                if v.Visible then
+                    v.Visible = false
+                end
+            end)
+        end
+    end
+end
+
+enforceVisibility()
+
+scrollingFrame.ChildAdded:Connect(function()
+    task.wait()
+    enforceVisibility()
+end)
+
+task.spawn(function()
+    while true do
+        enforceVisibility()
+        task.wait(0.05)
+    end
+end)
+
+-- Default colors
+spacer.BackgroundColor3 = defaultColor
+if stroke then
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+end
+
+local clicked = false
+local debounce = false
+
+-- Notification helper
+local function createNotification(text, color, name)
+    local clone = notifTemplate:Clone()
+    clone.Name = name or "Notification"
+    clone.Parent = notification
+    clone.Visible = true
+
+    if clone:FindFirstChild("TextLabel") then
+        clone.TextLabel.Text = text
+        clone.TextLabel.TextColor3 = color
+    end
+
+    task.delay(3, function()
+        if clone then
+            clone:Destroy()
+        end
+    end)
+end
+
+-- Click detection
+spacer.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and not debounce then
+        debounce = true
+
+        -- Show warning
+        warningTemplate.Visible = true
+
+        -- YES pressed
+        local yesConn
+        local noConn
+
+        yesConn = yesButton.MouseButton1Click:Connect(function()
+            yesConn:Disconnect()
+            if noConn then noConn:Disconnect() end
+
+            warningTemplate.Visible = false
+
+            clicked = true
+            spacer.BackgroundColor3 = clickedColor
+
+            if stroke then
+                stroke.Color = strokeClickedColor
+            end
+
+            createNotification(
+                "Successfully added 'Admin Commands' to trade!",
+                Color3.fromRGB(0, 255, 0),
+                "Success"
+            )
+
+            debounce = false
+        end)
+
+        -- NO pressed
+        noConn = noButton.MouseButton1Click:Connect(function()
+            noConn:Disconnect()
+            if yesConn then yesConn:Disconnect() end
+
+            warningTemplate.Visible = false
+
+            createNotification(
+                "Failed to add Gamepass",
+                Color3.fromRGB(255, 0, 0),
+                "Fail"
+            )
+
+            debounce = false
+        end)
+    end
+end)
+
+-- Reset when UI hides
+tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not tradeUI.Visible then
+        clicked = false
+        spacer.BackgroundColor3 = defaultColor
+
+        if stroke then
+            stroke.Color = Color3.fromRGB(0, 0, 0)
+        end
+    end
+end)

@@ -2,14 +2,14 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// TRADE UI (FIXED STRUCTURE)
+--// UI ROOTS
 local tradeRoot = playerGui:WaitForChild("TradeLiveTrade")
 local tradeUI = tradeRoot:WaitForChild("TradeLiveTrade")
-
 local yourFrame = tradeUI:WaitForChild("Your")
+
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 
--- ✅ FIXED PATH HERE
+-- ✅ FIXED LOCATION
 local baseSlots = yourFrame:WaitForChild("BaseSlots")
 
 local template = scrollingFrame:WaitForChild("Template")
@@ -19,133 +19,86 @@ local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
---// CONFIRMATION UI
+--// IMAGE SETUP (NEW)
+local image = spacer:FindFirstChild("ItemImage")
+if not image then
+	image = Instance.new("ImageLabel")
+	image.Name = "ItemImage"
+	image.Size = UDim2.new(1, 0, 1, 0)
+	image.BackgroundTransparency = 1
+	image.ZIndex = 2
+	image.Parent = spacer
+end
+image.Image = "rbxassetid://139291316302932"
+image.ScaleType = Enum.ScaleType.Fit
+
+--// UI ELEMENTS
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
 
-local content = warningTemplate:WaitForChild("Content")
-local description = content:WaitForChild("Description")
-
+local description = warningTemplate:WaitForChild("Content"):WaitForChild("Description")
 local yesButton = warningTemplate:WaitForChild("Yes")
 local noButton = warningTemplate:WaitForChild("No")
 
---// NOTIFICATION UI
-local notificationRoot = playerGui:WaitForChild("Notification")
-local notificationUI = notificationRoot:WaitForChild("Notification")
+local notificationUI = playerGui:WaitForChild("Notification"):WaitForChild("Notification")
+local notifTemplate = notificationUI:WaitForChild("Template")
 
-local notifTemplate = notificationUI:FindFirstChild("Template")
-	or notificationUI:WaitForChild("Template", 5)
-
---// SERVICES (for cleanup)
+--// SERVICES
 local Debris = game:GetService("Debris")
-local TweenService = game:GetService("TweenService")
+
+--// SOUNDS
+local function playSound(id)
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = 1
+	s.Parent = workspace
+	s:Play()
+	Debris:AddItem(s, 3)
+end
+
+--// SLOT VALUES
+local DEFAULT_SLOTS = "10/26"
+local USED_SLOTS = "9/26"
+
+baseSlots.Text = DEFAULT_SLOTS
+
+--// UI INIT
+template.Visible = true
+cash.Text = "0/s"
+title.Text = "Test"
+
+description.Text =
+"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
 --// COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
---// SOUND SYSTEM
-local function playSound(id, parent)
-	local sound = Instance.new("Sound")
-	sound.SoundId = id
-	sound.Volume = 1
-	sound.Parent = parent or workspace
-	sound:Play()
-
-	Debris:AddItem(sound, 3)
-end
-
---// SMOOTH TEXT CHANGE
-local function smoothSlotUpdate(newText)
-	baseSlots.Text = newText
-end
-
---// INIT UI
-local DEFAULT_SLOTS = "10/26"
-local USED_SLOTS = "9/26"
-
-cash.Text = "0/s"
-title.Text = "Test"
-description.Text =
-"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
-
-template.Visible = true
-baseSlots.Text = DEFAULT_SLOTS
-
---// IMAGE
-if not spacer:FindFirstChild("CustomImage") then
-	local image = Instance.new("ImageLabel")
-	image.Name = "CustomImage"
-	image.Parent = spacer
-	image.BackgroundTransparency = 1
-	image.Image = "rbxassetid://139291316302932"
-	image.Size = UDim2.new(0.5, 0, 0.5, 0)
-	image.Position = UDim2.new(0.25, 0, 0.25, 0)
-end
-
---// STATE
-local clicked = false
 spacer.BackgroundColor3 = defaultColor
+if stroke then stroke.Color = Color3.fromRGB(0,0,0) end
 
-if stroke then
-	stroke.Color = Color3.fromRGB(0, 0, 0)
-end
-
---// NOTIFICATION SYSTEM (FIXED TEXT)
-local function showNotification(text, color)
-	if not notifTemplate then return end
-
+--// NOTIFICATIONS
+local function notify(text, color)
 	local clone = notifTemplate:Clone()
 	clone.Parent = notificationUI
 	clone.Visible = true
 
 	local txt = clone:FindFirstChildWhichIsA("TextLabel", true)
 	if txt then
-		txt.Text = tostring(text)
+		txt.Text = text
 		txt.TextColor3 = color
 	end
 
 	task.delay(3, function()
-		if clone then
-			clone:Destroy()
-		end
+		clone:Destroy()
 	end)
 end
-
---// LOCK OTHER UI ITEMS
-local function enforceVisibility()
-	for _, v in ipairs(scrollingFrame:GetChildren()) do
-		if v ~= template and v:IsA("GuiObject") then
-			v.Visible = false
-
-			v:GetPropertyChangedSignal("Visible"):Connect(function()
-				if v.Visible then
-					v.Visible = false
-				end
-			end)
-		end
-	end
-end
-
-enforceVisibility()
-
-scrollingFrame.ChildAdded:Connect(function()
-	task.wait()
-	enforceVisibility()
-end)
-
-task.spawn(function()
-	while true do
-		enforceVisibility()
-		task.wait(0.05)
-	end
-end)
 
 --// TEMPLATE CLICK
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		playSound("rbxassetid://75311202481026", workspace)
+		playSound("rbxassetid://75311202481026")
 
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
@@ -154,43 +107,35 @@ end)
 
 --// YES
 yesButton.MouseButton1Click:Connect(function()
-	playSound("rbxassetid://83245966620103", workspace)
+	playSound("rbxassetid://83245966620103")
 
-	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
+	warningTemplate.Visible = false
 
-	clicked = true
 	spacer.BackgroundColor3 = clickedColor
+	if stroke then stroke.Color = strokeClickedColor end
 
-	if stroke then
-		stroke.Color = strokeClickedColor
-	end
+	-- SLOT UPDATE
+	baseSlots.Text = USED_SLOTS
 
-	smoothSlotUpdate(USED_SLOTS)
-
-	showNotification("Successfully added 'Admin Commands' to trade!", Color3.fromRGB(0, 255, 0))
+	notify("Successfully added 'Admin Commands' to trade!", Color3.fromRGB(0,255,0))
 end)
 
---// NO
+--// NO (UPDATED SOUND)
 noButton.MouseButton1Click:Connect(function()
-	playSound("rbxassetid://83245966620103", workspace)
+	playSound("rbxassetid://126210834885859")
 
-	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
+	warningTemplate.Visible = false
 
-	showNotification("Failed to add Gamepass", Color3.fromRGB(255, 0, 0))
+	notify("Failed to add Gamepass", Color3.fromRGB(255,0,0))
 end)
 
---// RESET WHEN TRADE CLOSES
+--// RESET ON CLOSE
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
-		clicked = false
+		baseSlots.Text = DEFAULT_SLOTS
 		spacer.BackgroundColor3 = defaultColor
-
-		if stroke then
-			stroke.Color = Color3.fromRGB(0, 0, 0)
-		end
-
-		smoothSlotUpdate(DEFAULT_SLOTS)
+		if stroke then stroke.Color = Color3.fromRGB(0,0,0) end
 	end
 end)

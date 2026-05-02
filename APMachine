@@ -1,14 +1,11 @@
 --// SERVICES
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
-local SoundService = game:GetService("SoundService")
-
---// SOUND IDS
-local CLICK_SOUND_ID = "rbxassetid://75311202481026"
-local CONFIRM_SOUND_ID = "rbxassetid://83245966620103"
 
 --// TRADE UI
-local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
+local tradeRoot = playerGui:WaitForChild("TradeLiveTrade")
+local tradeUI = tradeRoot:WaitForChild("TradeLiveTrade")
+
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 
@@ -20,15 +17,7 @@ local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
 --// BASE SLOTS
-local baseSlots = tradeUI:WaitForChild("TradeLiveTrade"):WaitForChild("BaseSlots")
-
-local function setSlots(value)
-	if baseSlots and baseSlots:IsA("TextLabel") then
-		baseSlots.Text = value
-	end
-end
-
-setSlots("10/26")
+local baseSlots = tradeUI:WaitForChild("BaseSlots")
 
 --// CONFIRMATION UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
@@ -44,20 +33,16 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template")
-if not notifTemplate then
-	notifTemplate = notificationUI:WaitForChild("Template", 5)
-end
+local notifTemplate = notificationUI:WaitForChild("Template", 5)
 
 --// COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
---// INIT TEXT
+--// INIT
 cash.Text = "0/s"
 title.Text = "Test"
-
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
@@ -77,10 +62,24 @@ local function playSound(id)
 	local sound = Instance.new("Sound")
 	sound.SoundId = id
 	sound.Volume = 1
-	sound.Parent = SoundService
+	sound.Parent = tradeUI
 	sound:Play()
 	game:GetService("Debris"):AddItem(sound, 3)
 end
+
+--// BASE SLOT STATE
+local maxSlots = 26
+local currentSlots = 10
+
+local function updateSlots()
+	baseSlots.Text = tostring(currentSlots) .. "/" .. tostring(maxSlots)
+end
+
+updateSlots()
+
+--// FORCE TEMPLATE VISIBLE
+template.Visible = true
+spacer.Visible = true
 
 --// LOCK OTHER UI ELEMENTS
 local function enforceVisibility()
@@ -97,14 +96,18 @@ local function enforceVisibility()
 	end
 end
 
---// FORCE TEMPLATE VISIBLE ON LOAD
-template.Visible = true
-
 enforceVisibility()
 
 scrollingFrame.ChildAdded:Connect(function()
 	task.wait()
 	enforceVisibility()
+end)
+
+task.spawn(function()
+	while true do
+		enforceVisibility()
+		task.wait(0.05)
+	end
 end)
 
 --// STATE
@@ -115,25 +118,30 @@ end
 
 local clicked = false
 
---// NOTIFICATION (FIXED TEXT ISSUE)
+--// CLIPBOARD SAFE
+local function copyToClipboard(text)
+	pcall(function()
+		if setclipboard then
+			setclipboard(text)
+		end
+	end)
+end
+
+--// NOTIFICATION SYSTEM (FIXED TEXT)
 local function showNotification(text, color)
 	local template = notificationUI:FindFirstChild("Template")
-	if not template then
-		template = notificationUI:WaitForChild("Template", 3)
-	end
-
 	if not template then return end
 
 	local clone = template:Clone()
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	-- FIX: force ALL text labels to update (fixes white default bug)
-	for _, obj in ipairs(clone:GetDescendants()) do
-		if obj:IsA("TextLabel") then
-			obj.Text = text
-			obj.TextColor3 = color
-		end
+	local label = clone:FindFirstChildWhichIsA("TextLabel", true)
+	if label then
+		label.Text = text
+		label.TextColor3 = color
+	else
+		clone.Text = text -- fallback
 	end
 
 	task.delay(3, function()
@@ -143,12 +151,10 @@ local function showNotification(text, color)
 	end)
 end
 
---// TEMPLATE CLICK (add item)
-template.InputBegan:Connect(function(input)
+--// TEMPLATE CLICK
+spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		playSound(CLICK_SOUND_ID)
-
-		setSlots("9/26")
+		playSound("rbxassetid://75311202481026")
 
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
@@ -157,7 +163,7 @@ end)
 
 --// YES BUTTON
 yesButton.MouseButton1Click:Connect(function()
-	playSound(CONFIRM_SOUND_ID)
+	playSound("rbxassetid://83245966620103")
 
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -169,20 +175,47 @@ yesButton.MouseButton1Click:Connect(function()
 		stroke.Color = strokeClickedColor
 	end
 
-	showNotification("Successfully added item to trade!", Color3.fromRGB(0, 255, 0))
+	-- decrease slots
+	if currentSlots > 0 then
+		currentSlots -= 1
+		updateSlots()
+	end
+
+	showNotification(
+		"Successfully added 'Admin Commands' to trade!",
+		Color3.fromRGB(0, 255, 0)
+	)
 end)
 
 --// NO BUTTON
 noButton.MouseButton1Click:Connect(function()
-	playSound(CONFIRM_SOUND_ID)
+	playSound("rbxassetid://83245966620103")
 
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	showNotification("Failed to add item", Color3.fromRGB(255, 0, 0))
+	local failClone = notifTemplate and notifTemplate:Clone()
+	if not failClone then return end
+
+	failClone.Parent = notificationUI
+	failClone.Visible = true
+
+	local txt = failClone:FindFirstChildWhichIsA("TextLabel", true)
+	if txt then
+		txt.Text = "Failed to add Gamepass"
+		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
+	end
+
+	copyToClipboard("Failed to add Gamepass")
+
+	task.delay(3, function()
+		if failClone then
+			failClone:Destroy()
+		end
+	end)
 end)
 
---// RESET UI ON CLOSE
+--// RESET ON UI CLOSE
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
 		clicked = false
@@ -192,6 +225,8 @@ tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 			stroke.Color = Color3.fromRGB(0, 0, 0)
 		end
 
-		setSlots("10/26")
+		-- reset slots
+		currentSlots = 10
+		updateSlots()
 	end
 end)

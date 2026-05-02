@@ -2,14 +2,15 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// TRADE UI (FIXED PATH)
+--// TRADE UI (TRIPLE PATH FIX)
 local tradeRoot = playerGui:WaitForChild("TradeLiveTrade")
 local tradeUI = tradeRoot:WaitForChild("TradeLiveTrade")
+local tradeInner = tradeUI:WaitForChild("TradeLiveTrade") -- FIXED EXTRA LAYER
 
-local yourFrame = tradeUI:WaitForChild("Your")
+local yourFrame = tradeInner:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 
-local baseSlots = tradeUI:WaitForChild("BaseSlots")
+local baseSlots = tradeInner:WaitForChild("BaseSlots") -- ✅ FIXED PATH HERE
 
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
@@ -32,7 +33,7 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template") 
+local notifTemplate = notificationUI:FindFirstChild("Template")
 	or notificationUI:WaitForChild("Template", 5)
 
 --// COLORS
@@ -54,10 +55,10 @@ end
 --// INIT UI
 cash.Text = "0/s"
 title.Text = "Test"
+
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
--- ensure template visible on load
 template.Visible = true
 
 --// IMAGE
@@ -114,16 +115,7 @@ if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
 end
 
---// CLIPBOARD SAFE
-local function copyToClipboard(text)
-	pcall(function()
-		if setclipboard then
-			setclipboard(text)
-		end
-	end)
-end
-
---// NOTIFICATIONS (FIXED TEXT ISSUE)
+--// NOTIFICATIONS
 local function showNotification(text, color)
 	if not notifTemplate then return end
 
@@ -144,7 +136,7 @@ local function showNotification(text, color)
 	end)
 end
 
---// TEMPLATE CLICK (FIXED + SOUND + SLOT UPDATE)
+--// TEMPLATE CLICK
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		playSound("rbxassetid://75311202481026", workspace)
@@ -184,8 +176,8 @@ noButton.MouseButton1Click:Connect(function()
 end)
 
 --// RESET ON CLOSE
-tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
-	if not tradeUI.Visible then
+tradeInner:GetPropertyChangedSignal("Visible"):Connect(function()
+	if not tradeInner.Visible then
 		clicked = false
 		spacer.BackgroundColor3 = defaultColor
 

@@ -1,8 +1,7 @@
---// SERVICES
+-- SERVICES
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// TRADE UI
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
@@ -10,14 +9,12 @@ local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
 
--- ⭐ ADDED: FORCE TEMPLATE VISIBLE ON LOAD
 template.Visible = true
 
 local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
---// CONFIRMATION UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
 
@@ -27,7 +24,6 @@ local description = content:WaitForChild("Description")
 local yesButton = warningTemplate:WaitForChild("Yes")
 local noButton = warningTemplate:WaitForChild("No")
 
---// NOTIFICATION UI
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
@@ -36,19 +32,16 @@ if not notifTemplate then
 	notifTemplate = notificationUI:WaitForChild("Template", 5)
 end
 
---// COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
---// INIT TEXT
-cash.Text = "0/s"
-title.Text = "Test"
+cash.Text = "9,999"
+title.Text = "[🎁] Admin Panel"
 
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
---// ADD IMAGE (SPACER ONLY - KEEP THIS ONE)
 if not spacer:FindFirstChild("CustomImage") then
 	local image = Instance.new("ImageLabel")
 	image.Name = "CustomImage"
@@ -59,13 +52,11 @@ if not spacer:FindFirstChild("CustomImage") then
 	image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
---// ⭐ FIX: REMOVE DUPLICATE IMAGE FROM TEMPLATE IF IT EXISTS
 local existingTemplateImage = template:FindFirstChild("CustomImage")
 if existingTemplateImage then
 	existingTemplateImage:Destroy()
 end
 
---// LOCK OTHER UI ELEMENTS
 local function enforceVisibility()
 	for _, v in ipairs(scrollingFrame:GetChildren()) do
 		if v ~= template and v:IsA("GuiObject") then
@@ -94,7 +85,6 @@ task.spawn(function()
 	end
 end)
 
---// STATE
 spacer.BackgroundColor3 = defaultColor
 if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
@@ -102,7 +92,6 @@ end
 
 local clicked = false
 
---// NOTIFICATION SYSTEM
 local function showNotification(text, color)
 	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
 
@@ -139,7 +128,6 @@ local function showNotification(text, color)
 	end)
 end
 
---// SOUNDS
 local yesSound = Instance.new("Sound")
 yesSound.SoundId = "rbxassetid://83245966620103"
 yesSound.Volume = 1
@@ -155,7 +143,6 @@ failSound.SoundId = "rbxassetid://126210834885859"
 failSound.Volume = 1
 failSound.Parent = warningTemplate
 
---// OPEN CONFIRMATION
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		confirmationUI.Enabled = true
@@ -167,7 +154,6 @@ spacer.InputBegan:Connect(function(input)
 	end
 end)
 
---// YES BUTTON
 yesButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -184,12 +170,11 @@ yesButton.MouseButton1Click:Connect(function()
 	end
 
 	showNotification(
-		"Sucessfully added 'Admin Commands' to trade!",
+		"Sucessfully added 'Admin Panel' to trade!",
 		Color3.fromRGB(0, 255, 0)
 	)
 end)
 
---// NO BUTTON
 noButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -218,7 +203,7 @@ noButton.MouseButton1Click:Connect(function()
 	end
 
 	if txt then
-		txt.Text = "Failed to add Gamepass"
+		txt.Text = "Failed to add 'Admin Panel' to trade!"
 		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
 	end
 
@@ -229,7 +214,6 @@ noButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
---// RESET UI ON CLOSE
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
 		clicked = false

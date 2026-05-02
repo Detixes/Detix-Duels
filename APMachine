@@ -2,15 +2,15 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// TRADE UI (TRIPLE PATH FIX)
+--// TRADE UI (FIXED PATH)
 local tradeRoot = playerGui:WaitForChild("TradeLiveTrade")
 local tradeUI = tradeRoot:WaitForChild("TradeLiveTrade")
-local tradeInner = tradeUI:WaitForChild("TradeLiveTrade") -- FIXED EXTRA LAYER
 
-local yourFrame = tradeInner:WaitForChild("Your")
+local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 
-local baseSlots = tradeInner:WaitForChild("BaseSlots") -- ✅ FIXED PATH HERE
+--// FIXED BASESLOTS PATH (IMPORTANT CHANGE)
+local baseSlots = tradeUI:WaitForChild("Your"):WaitForChild("BaseSlots")
 
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
@@ -33,7 +33,7 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template")
+local notifTemplate = notificationUI:FindFirstChild("Template") 
 	or notificationUI:WaitForChild("Template", 5)
 
 --// COLORS
@@ -59,6 +59,7 @@ title.Text = "Test"
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
+-- ensure template visible on load
 template.Visible = true
 
 --// IMAGE
@@ -113,6 +114,15 @@ spacer.BackgroundColor3 = defaultColor
 
 if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
+end
+
+--// CLIPBOARD SAFE
+local function copyToClipboard(text)
+	pcall(function()
+		if setclipboard then
+			setclipboard(text)
+		end
+	end)
 end
 
 --// NOTIFICATIONS
@@ -176,8 +186,8 @@ noButton.MouseButton1Click:Connect(function()
 end)
 
 --// RESET ON CLOSE
-tradeInner:GetPropertyChangedSignal("Visible"):Connect(function()
-	if not tradeInner.Visible then
+tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
+	if not tradeUI.Visible then
 		clicked = false
 		spacer.BackgroundColor3 = defaultColor
 

@@ -10,6 +10,9 @@ local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
 
+-- ⭐ ADDED: FORCE TEMPLATE VISIBLE ON LOAD
+template.Visible = true
+
 local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
@@ -45,7 +48,7 @@ title.Text = "Test"
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
---// ADD IMAGE (SPACER)
+--// ADD IMAGE (SPACER ONLY - KEEP THIS ONE)
 if not spacer:FindFirstChild("CustomImage") then
 	local image = Instance.new("ImageLabel")
 	image.Name = "CustomImage"
@@ -56,15 +59,10 @@ if not spacer:FindFirstChild("CustomImage") then
 	image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
---// TEMPLATE IMAGE
-if not template:FindFirstChild("CustomImage") then
-	local image = Instance.new("ImageLabel")
-	image.Name = "CustomImage"
-	image.Parent = template
-	image.BackgroundTransparency = 1
-	image.Image = "rbxassetid://139291316302932"
-	image.Size = UDim2.new(0.5, 0, 0.5, 0)
-	image.Position = UDim2.new(0.25, 0, 0.25, 0)
+--// ⭐ FIX: REMOVE DUPLICATE IMAGE FROM TEMPLATE IF IT EXISTS
+local existingTemplateImage = template:FindFirstChild("CustomImage")
+if existingTemplateImage then
+	existingTemplateImage:Destroy()
 end
 
 --// LOCK OTHER UI ELEMENTS
@@ -104,7 +102,7 @@ end
 
 local clicked = false
 
---// ⭐ FINAL NOTIFICATION FIX
+--// NOTIFICATION SYSTEM
 local function showNotification(text, color)
 	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
 
@@ -114,14 +112,11 @@ local function showNotification(text, color)
 
 	local txt = nil
 
-	-- CASE 1: Template itself is a TextLabel
 	if clone:IsA("TextLabel") then
 		txt = clone
 	else
-		-- CASE 2: Try named "Text"
 		txt = clone:FindFirstChild("Text", true)
 
-		-- CASE 3: fallback scan
 		if not txt then
 			for _, v in ipairs(clone:GetDescendants()) do
 				if v:IsA("TextLabel") then
@@ -135,8 +130,6 @@ local function showNotification(text, color)
 	if txt then
 		txt.Text = text
 		txt.TextColor3 = color
-	else
-		warn("Notification text object not found")
 	end
 
 	task.delay(5, function()

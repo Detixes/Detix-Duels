@@ -1,8 +1,8 @@
---// Services
+-- Services
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
---// UI Paths (Trade)
+-- UI References
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
@@ -14,154 +14,184 @@ local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
---// Confirmation UI
+-- Confirmation UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
 local warningContent = warningTemplate:WaitForChild("Content")
-local warningDescription = warningContent:WaitForChild("Description")
+local description = warningContent:WaitForChild("Description")
 
-local yesButton = warningTemplate:WaitForChild("Yes")
-local noButton = warningTemplate:WaitForChild("No")
-
---// Notification UI
-local notificationUI = playerGui:WaitForChild("Notification")
+-- Notification UI
+local notificationUI = playerGui:WaitForChild("Notification"):WaitForChild("Notification")
 local notificationTemplate = notificationUI:WaitForChild("Template")
 
---// Colors
+-- Colors
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
---// State
-local selected = false
-local pendingSelection = false
+-- State
+local pendingAction = false
 
---// Setup UI text
+------------------------------------------------
+-- UI Setup
+------------------------------------------------
+
 cash.Text = "0/s"
 title.Text = "Test"
 
---// Add image once
+-- Add image once
 if not spacer:FindFirstChild("CustomImage") then
-	local image = Instance.new("ImageLabel")
-	image.Name = "CustomImage"
-	image.Parent = spacer
-	image.BackgroundTransparency = 1
-	image.Image = "rbxassetid://139291316302932"
-	image.Size = UDim2.new(0.5, 0, 0.5, 0)
-	image.Position = UDim2.new(0.25, 0, 0.25, 0)
+    local image = Instance.new("ImageLabel")
+    image.Name = "CustomImage"
+    image.Parent = spacer
+    image.BackgroundTransparency = 1
+    image.Image = "rbxassetid://139291316302932"
+    image.Size = UDim2.new(0.5, 0, 0.5, 0)
+    image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
---// Force hide non-template UI
-local function enforceVisibility()
-	for _, v in ipairs(scrollingFrame:GetChildren()) do
-		if v ~= template and v:IsA("GuiObject") then
-			v.Visible = false
+-- Set default colors
+spacer.BackgroundColor3 = defaultColor
+if stroke then
+    stroke.Color = Color3.fromRGB(0, 0, 0)
+end
 
-			v:GetPropertyChangedSignal("Visible"):Connect(function()
-				if v.Visible == true then
-					v.Visible = false
-				end
-			end)
-		end
-	end
+------------------------------------------------
+-- Lock other UI elements
+------------------------------------------------
+
+local function enforceVisibility()
+    for _, v in ipairs(scrollingFrame:GetChildren()) do
+        if v ~= template and v:IsA("GuiObject") then
+            v.Visible = false
+
+            v:GetPropertyChangedSignal("Visible"):Connect(function()
+                if v.Visible then
+                    v.Visible = false
+                end
+            end)
+        end
+    end
 end
 
 enforceVisibility()
 
 scrollingFrame.ChildAdded:Connect(function()
-	task.wait()
-	enforceVisibility()
+    task.wait()
+    enforceVisibility()
 end)
 
 task.spawn(function()
-	while true do
-		enforceVisibility()
-		task.wait(0.05)
-	end
+    while true do
+        enforceVisibility()
+        task.wait(0.05)
+    end
 end)
 
---// Set confirmation text on load
-warningDescription.Text =
-"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+------------------------------------------------
+-- Notification Helper
+------------------------------------------------
 
-warningTemplate.Visible = false
-
---// Notification helper
 local function showNotification(text, color)
-	local clone = notificationTemplate:Clone()
-	clone.Parent = notificationUI
-	clone.Visible = true
-	clone.Name = "TempNotification"
+    local clone = notificationTemplate:Clone()
+    clone.Parent = notificationUI
+    clone.Visible = true
+    clone.Name = "Notification"
 
-	local label = clone:FindFirstChildWhichIsA("TextLabel")
-	if label then
-		label.Text = text
-		label.TextColor3 = color
-	end
+    if clone:FindFirstChild("TextLabel") then
+        clone.TextLabel.Text = text
+        clone.TextLabel.TextColor3 = color
+    elseif clone:IsA("TextLabel") then
+        clone.Text = text
+        clone.TextColor3 = color
+    end
 
-	task.delay(3, function()
-		if clone then
-			clone:Destroy()
-		end
-	end)
+    task.delay(3, function()
+        clone:Destroy()
+    end)
 end
 
---// Click opens confirmation
-spacer.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		pendingSelection = true
-		warningTemplate.Visible = true
-	end
-end)
+------------------------------------------------
+-- Confirmation Logic
+------------------------------------------------
 
---// YES button
+local function openConfirmation()
+    warningTemplate.Visible = true
+end
+
+-- Set description on load
+description.Text = "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+------------------------------------------------
+-- Yes / No buttons
+------------------------------------------------
+
+local yesButton = warningTemplate:WaitForChild("Yes")
+local noButton = warningTemplate:WaitForChild("No")
+
 yesButton.MouseButton1Click:Connect(function()
-	if not pendingSelection then return end
-	pendingSelection = false
+    warningTemplate.Visible = false
 
-	warningTemplate.Visible = false
+    -- visual feedback while processing
+    spacer.BackgroundColor3 = clickedColor
+    if stroke then
+        stroke.Color = strokeClickedColor
+    end
 
-	-- Apply selection visuals
-	selected = true
-	spacer.BackgroundColor3 = clickedColor
+    task.wait(0.2)
 
-	if stroke then
-		stroke.Color = strokeClickedColor
-	end
+    showNotification("Successfully added 'Admin Commands' to trade!", Color3.fromRGB(0, 255, 0))
 
-	-- Success notification
-	showNotification(
-		"Successfully added 'Admin Commands' to trade!",
-		Color3.fromRGB(0, 255, 0)
-	)
+    task.wait(0.2)
+    pendingAction = false
 end)
 
---// NO button
 noButton.MouseButton1Click:Connect(function()
-	if not pendingSelection then return end
-	pendingSelection = false
+    warningTemplate.Visible = false
+    pendingAction = false
 
-	warningTemplate.Visible = false
+    local clone = notificationTemplate:Clone()
+    clone.Parent = notificationUI
+    clone.Visible = true
+    clone.Name = "Fail"
 
-	-- Failure notification
-	showNotification(
-		"Failed to add Gamepass",
-		Color3.fromRGB(255, 0, 0)
-	)
+    if clone:FindFirstChild("TextLabel") then
+        clone.TextLabel.Text = "Failed to add Gamepass"
+        clone.TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+    elseif clone:IsA("TextLabel") then
+        clone.Text = "Failed to add Gamepass"
+        clone.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+
+    task.delay(3, function()
+        clone:Destroy()
+    end)
 end)
 
---// Reset UI when trade closes
+------------------------------------------------
+-- Click handling (NOW OPENS CONFIRMATION FIRST)
+------------------------------------------------
+
+spacer.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if pendingAction then return end
+        pendingAction = true
+
+        openConfirmation()
+    end
+end)
+
+------------------------------------------------
+-- Reset UI state
+------------------------------------------------
+
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
-	if not tradeUI.Visible then
-		selected = false
-		pendingSelection = false
+    if not tradeUI.Visible then
+        pendingAction = false
 
-		spacer.BackgroundColor3 = defaultColor
-
-		if stroke then
-			stroke.Color = Color3.fromRGB(0, 0, 0)
-		end
-
-		warningTemplate.Visible = false
-	end
+        spacer.BackgroundColor3 = defaultColor
+        if stroke then
+            stroke.Color = Color3.fromRGB(0, 0, 0)
+        end
+    end
 end)

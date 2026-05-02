@@ -1214,14 +1214,14 @@ local function InterceptBuyButton()
             "[🎁] Admin Commands [Trade Machine]",
             "9,999",
             IMG_ITEM_THUMB,
-            "1,214,231",
+            "154K",
             function()
                 ShowPurchaseConfirmation(target, function(recipient)
                     local recipientName = recipient and recipient.Name or "Unknown"
                     ShowGiftNotification(recipientName)
 
                     task.delay(1, function()
-                        ShowSecondaryShopPrompt("316,696",
+                        ShowSecondaryShopPrompt("153K",
                             function()
                                 ShowPurchaseConfirmation(nil, function()
                                     local nextTarget = getNearestPlayer()

@@ -24,7 +24,7 @@ local description = content:WaitForChild("Description")
 local yesButton = warningTemplate:WaitForChild("Yes")
 local noButton = warningTemplate:WaitForChild("No")
 
---// NOTIFICATION UI (FIXED SAFE LOAD)
+--// NOTIFICATION UI
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
@@ -104,7 +104,7 @@ end
 
 local clicked = false
 
---// ⭐ FIXED NOTIFICATION SYSTEM
+--// ⭐ FIXED NOTIFICATION SYSTEM (REAL FIX)
 local function showNotification(text, color)
 	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
 
@@ -112,10 +112,22 @@ local function showNotification(text, color)
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	local txt = clone:FindFirstChildWhichIsA("TextLabel", true)
+	-- FIXED TEXT TARGETING
+	local txt = clone:FindFirstChild("Text", true)
+	if not txt then
+		for _, v in ipairs(clone:GetDescendants()) do
+			if v:IsA("TextLabel") then
+				txt = v
+				break
+			end
+		end
+	end
+
 	if txt then
 		txt.Text = text
 		txt.TextColor3 = color
+	else
+		warn("No TextLabel found in notification clone")
 	end
 
 	task.delay(5, function()
@@ -125,7 +137,7 @@ local function showNotification(text, color)
 	end)
 end
 
---// ⭐ ADDED SOUNDS
+--// SOUNDS
 local yesSound = Instance.new("Sound")
 yesSound.SoundId = "rbxassetid://83245966620103"
 yesSound.Volume = 1
@@ -147,7 +159,6 @@ spacer.InputBegan:Connect(function(input)
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
 
-		-- play template click sound
 		if clickSound then
 			clickSound:Play()
 		end
@@ -159,7 +170,6 @@ yesButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	-- play yes sound
 	if yesSound then
 		yesSound:Play()
 	end
@@ -197,7 +207,7 @@ noButton.MouseButton1Click:Connect(function()
 	failClone.Parent = notificationUI
 	failClone.Visible = true
 
-	local txt = failClone:FindFirstChildWhichIsA("TextLabel", true)
+	local txt = failClone:FindFirstChild("Text", true)
 	if txt then
 		txt.Text = "Failed to add Gamepass"
 		txt.TextColor3 = Color3.fromRGB(255, 0, 0)

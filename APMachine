@@ -56,7 +56,7 @@ if not spacer:FindFirstChild("CustomImage") then
 	image.Position = UDim2.new(0.25, 0, 0.25, 0)
 end
 
---// ⭐ ADDED: TEMPLATE IMAGE (NEW FEATURE)
+--// TEMPLATE IMAGE
 if not template:FindFirstChild("CustomImage") then
 	local image = Instance.new("ImageLabel")
 	image.Name = "CustomImage"
@@ -104,27 +104,9 @@ end
 
 local clicked = false
 
---// CLIPBOARD SAFE
-local function copyToClipboard(text)
-	pcall(function()
-		if setclipboard then
-			setclipboard(text)
-		end
-	end)
-end
-
---// NOTIFICATION SYSTEM (SAFE + NO INFINITE YIELD)
+--// ⭐ FIXED NOTIFICATION SYSTEM
 local function showNotification(text, color)
-	local template = notificationUI:FindFirstChild("Template")
-	if not template then
-		template = notificationUI:WaitForChild("Template", 3)
-	end
-
-	if not template then
-		warn("Notification Template missing")
-		copyToClipboard("Notification Template missing")
-		return
-	end
+	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
 
 	local clone = template:Clone()
 	clone.Parent = notificationUI
@@ -136,18 +118,39 @@ local function showNotification(text, color)
 		txt.TextColor3 = color
 	end
 
-	task.delay(3, function()
+	task.delay(5, function()
 		if clone then
 			clone:Destroy()
 		end
 	end)
 end
 
+--// ⭐ ADDED SOUNDS
+local yesSound = Instance.new("Sound")
+yesSound.SoundId = "rbxassetid://83245966620103"
+yesSound.Volume = 1
+yesSound.Parent = warningTemplate
+
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://75311202481026"
+clickSound.Volume = 1
+clickSound.Parent = spacer
+
+local failSound = Instance.new("Sound")
+failSound.SoundId = "rbxassetid://126210834885859"
+failSound.Volume = 1
+failSound.Parent = warningTemplate
+
 --// OPEN CONFIRMATION
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
+
+		-- play template click sound
+		if clickSound then
+			clickSound:Play()
+		end
 	end
 end)
 
@@ -155,6 +158,11 @@ end)
 yesButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
+
+	-- play yes sound
+	if yesSound then
+		yesSound:Play()
+	end
 
 	clicked = true
 	spacer.BackgroundColor3 = clickedColor
@@ -169,18 +177,11 @@ yesButton.MouseButton1Click:Connect(function()
 	)
 end)
 
---// ⭐ ADDED: NO BUTTON SOUND
-local failSound = Instance.new("Sound")
-failSound.SoundId = "rbxassetid://126210834885859"
-failSound.Volume = 1
-failSound.Parent = warningTemplate
-
 --// NO BUTTON
 noButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	-- play sound (ADDED)
 	if failSound then
 		failSound:Play()
 	end
@@ -189,7 +190,6 @@ noButton.MouseButton1Click:Connect(function()
 
 	if not failClone then
 		warn("Template missing for fail notification")
-		copyToClipboard("Failed to add Gamepass")
 		return
 	end
 
@@ -203,9 +203,7 @@ noButton.MouseButton1Click:Connect(function()
 		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
 	end
 
-	copyToClipboard("Failed to add Gamepass")
-
-	task.delay(3, function()
+	task.delay(5, function()
 		if failClone then
 			failClone:Destroy()
 		end

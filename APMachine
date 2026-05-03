@@ -130,7 +130,7 @@ end
 
 local yesSound = Instance.new("Sound")
 yesSound.SoundId = "rbxassetid://83245966620103"
-yesSound.Volume = 1
+yesSound.Volume = 0.5
 yesSound.Parent = warningTemplate
 
 local clickSound = Instance.new("Sound")
@@ -140,7 +140,7 @@ clickSound.Parent = spacer
 
 local failSound = Instance.new("Sound")
 failSound.SoundId = "rbxassetid://126210834885859"
-failSound.Volume = 1
+failSound.Volume = 0.5
 failSound.Parent = warningTemplate
 
 spacer.InputBegan:Connect(function(input)

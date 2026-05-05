@@ -29,10 +29,13 @@ local notificationUI = notificationRoot:WaitForChild("Notification")
 
 local notifTemplate = notificationUI:FindFirstChild("Template") or notificationUI:WaitForChild("Template", 5)
 
+-- ✅ READY BUTTON PATH
+local otherReadyTxt = tradeUI:WaitForChild("Other"):WaitForChild("ReadyButton"):WaitForChild("Txt")
+
 -- COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 15)
-local holdColor = Color3.fromRGB(81, 103, 81) -- NEW HOLD COLOR
+local holdColor = Color3.fromRGB(81, 103, 81)
 local strokeClickedColor = Color3.fromRGB(15, 255, 15)
 
 cash.Text = "9,999"
@@ -135,7 +138,6 @@ spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		holding = true
 
-		-- If already selected → show HOLD color
 		if clicked then
 			spacer.BackgroundColor3 = holdColor
 		end
@@ -151,7 +153,7 @@ spacer.InputEnded:Connect(function(input)
 			clickSound:Play()
 		end
 
-		-- ✅ IF ALREADY CLICKED → REMOVE (NO WARNING)
+		-- ✅ REMOVE ITEM (NOW WITH SOUND + RED NOTIF)
 		if clicked then
 			clicked = false
 			spacer.BackgroundColor3 = defaultColor
@@ -160,15 +162,20 @@ spacer.InputEnded:Connect(function(input)
 				stroke.Color = Color3.fromRGB(0, 0, 0)
 			end
 
+			-- 🔊 PLAY FAIL SOUND
+			if failSound then
+				failSound:Play()
+			end
+
 			showNotification(
 				"Removed 'Admin Panel' from trade!",
-				Color3.fromRGB(255, 170, 0)
+				Color3.fromRGB(255, 0, 0)
 			)
 
 			return
 		end
 
-		-- ✅ IF DEFAULT → SHOW WARNING
+		-- SHOW WARNING
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
 	end
@@ -221,6 +228,21 @@ noButton.MouseButton1Click:Connect(function()
 			failClone:Destroy()
 		end
 	end)
+end)
+
+-- ✅ CONSTANT ACCEPT CHECK
+task.spawn(function()
+	while true do
+		if otherReadyTxt.Text == "ACCEPTED" then
+			clicked = false
+			spacer.BackgroundColor3 = defaultColor
+
+			if stroke then
+				stroke.Color = Color3.fromRGB(0, 0, 0)
+			end
+		end
+		task.wait(0.1)
+	end
 end)
 
 -- RESET WHEN UI CLOSES

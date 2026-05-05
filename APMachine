@@ -27,13 +27,12 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template")
-if not notifTemplate then
-	notifTemplate = notificationUI:WaitForChild("Template", 5)
-end
+local notifTemplate = notificationUI:FindFirstChild("Template") or notificationUI:WaitForChild("Template", 5)
 
+-- COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
 local clickedColor = Color3.fromRGB(15, 50, 15)
+local holdColor = Color3.fromRGB(81, 103, 81) -- NEW HOLD COLOR
 local strokeClickedColor = Color3.fromRGB(15, 255, 15)
 
 cash.Text = "9,999"
@@ -42,6 +41,7 @@ title.Text = "[🎁] Admin Panel"
 description.Text =
 "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
+-- IMAGE
 if not spacer:FindFirstChild("CustomImage") then
 	local image = Instance.new("ImageLabel")
 	image.Name = "CustomImage"
@@ -57,11 +57,11 @@ if existingTemplateImage then
 	existingTemplateImage:Destroy()
 end
 
+-- FORCE ONLY TEMPLATE VISIBLE
 local function enforceVisibility()
 	for _, v in ipairs(scrollingFrame:GetChildren()) do
 		if v ~= template and v:IsA("GuiObject") then
 			v.Visible = false
-
 			v:GetPropertyChangedSignal("Visible"):Connect(function()
 				if v.Visible then
 					v.Visible = false
@@ -85,36 +85,22 @@ task.spawn(function()
 	end
 end)
 
+-- INITIAL STATE
 spacer.BackgroundColor3 = defaultColor
 if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
 end
 
 local clicked = false
+local holding = false
 
+-- NOTIFICATION FUNCTION
 local function showNotification(text, color)
-	local template = notificationRoot:WaitForChild("Notification"):WaitForChild("Template")
-
-	local clone = template:Clone()
+	local clone = notifTemplate:Clone()
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	local txt = nil
-
-	if clone:IsA("TextLabel") then
-		txt = clone
-	else
-		txt = clone:FindFirstChild("Text", true)
-
-		if not txt then
-			for _, v in ipairs(clone:GetDescendants()) do
-				if v:IsA("TextLabel") then
-					txt = v
-					break
-				end
-			end
-		end
-	end
+	local txt = clone:IsA("TextLabel") and clone or clone:FindFirstChild("Text", true)
 
 	if txt then
 		txt.Text = text
@@ -128,6 +114,7 @@ local function showNotification(text, color)
 	end)
 end
 
+-- SOUNDS
 local yesSound = Instance.new("Sound")
 yesSound.SoundId = "rbxassetid://83245966620103"
 yesSound.Volume = 0.5
@@ -143,17 +130,51 @@ failSound.SoundId = "rbxassetid://126210834885859"
 failSound.Volume = 0.5
 failSound.Parent = warningTemplate
 
+-- INPUT HANDLING
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		confirmationUI.Enabled = true
-		warningTemplate.Visible = true
+		holding = true
 
-		if clickSound then
-			clickSound:Play()
+		-- If already selected → show HOLD color
+		if clicked then
+			spacer.BackgroundColor3 = holdColor
 		end
 	end
 end)
 
+spacer.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if not holding then return end
+		holding = false
+
+		if clickSound then
+			clickSound:Play()
+		end
+
+		-- ✅ IF ALREADY CLICKED → REMOVE (NO WARNING)
+		if clicked then
+			clicked = false
+			spacer.BackgroundColor3 = defaultColor
+
+			if stroke then
+				stroke.Color = Color3.fromRGB(0, 0, 0)
+			end
+
+			showNotification(
+				"Removed 'Admin Panel' from trade!",
+				Color3.fromRGB(255, 170, 0)
+			)
+
+			return
+		end
+
+		-- ✅ IF DEFAULT → SHOW WARNING
+		confirmationUI.Enabled = true
+		warningTemplate.Visible = true
+	end
+end)
+
+-- YES BUTTON
 yesButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -170,11 +191,12 @@ yesButton.MouseButton1Click:Connect(function()
 	end
 
 	showNotification(
-		"Sucessfully added 'Admin Panel' to trade!",
+		"Successfully added 'Admin Panel' to trade!",
 		Color3.fromRGB(0, 255, 0)
 	)
 end)
 
+-- NO BUTTON
 noButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
@@ -183,24 +205,11 @@ noButton.MouseButton1Click:Connect(function()
 		failSound:Play()
 	end
 
-	local failClone = notifTemplate and notifTemplate:Clone()
-
-	if not failClone then
-		warn("Template missing for fail notification")
-		return
-	end
-
-	failClone.Name = "Fail"
+	local failClone = notifTemplate:Clone()
 	failClone.Parent = notificationUI
 	failClone.Visible = true
 
-	local txt = nil
-
-	if failClone:IsA("TextLabel") then
-		txt = failClone
-	else
-		txt = failClone:FindFirstChild("Text", true)
-	end
+	local txt = failClone:IsA("TextLabel") and failClone or failClone:FindFirstChild("Text", true)
 
 	if txt then
 		txt.Text = "Failed to add 'Admin Panel' to trade!"
@@ -214,6 +223,7 @@ noButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
+-- RESET WHEN UI CLOSES
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
 		clicked = false

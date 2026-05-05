@@ -27,10 +27,10 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template") or notificationUI:WaitForChild("Template", 5)
-
--- ✅ READY BUTTON PATH
-local otherReadyTxt = tradeUI:WaitForChild("Other"):WaitForChild("ReadyButton"):WaitForChild("Txt")
+local notifTemplate = notificationUI:FindFirstChild("Template")
+if not notifTemplate then
+	notifTemplate = notificationUI:WaitForChild("Template", 5)
+end
 
 -- COLORS
 local defaultColor = Color3.fromRGB(35, 45, 50)
@@ -42,7 +42,7 @@ cash.Text = "9,999"
 title.Text = "[🎁] Admin Panel"
 
 description.Text =
-"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+	"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
 -- IMAGE
 if not spacer:FindFirstChild("CustomImage") then
@@ -65,6 +65,7 @@ local function enforceVisibility()
 	for _, v in ipairs(scrollingFrame:GetChildren()) do
 		if v ~= template and v:IsA("GuiObject") then
 			v.Visible = false
+
 			v:GetPropertyChangedSignal("Visible"):Connect(function()
 				if v.Visible then
 					v.Visible = false
@@ -88,7 +89,7 @@ task.spawn(function()
 	end
 end)
 
--- INITIAL STATE
+-- STATE
 spacer.BackgroundColor3 = defaultColor
 if stroke then
 	stroke.Color = Color3.fromRGB(0, 0, 0)
@@ -99,11 +100,26 @@ local holding = false
 
 -- NOTIFICATION FUNCTION
 local function showNotification(text, color)
-	local clone = notifTemplate:Clone()
-	clone.Parent = notificationUI
-	clone.Visible = true
+	local templateClone = notifTemplate:Clone()
+	templateClone.Parent = notificationUI
+	templateClone.Visible = true
 
-	local txt = clone:IsA("TextLabel") and clone or clone:FindFirstChild("Text", true)
+	local txt = nil
+
+	if templateClone:IsA("TextLabel") then
+		txt = templateClone
+	else
+		txt = templateClone:FindFirstChild("Text", true)
+
+		if not txt then
+			for _, v in ipairs(templateClone:GetDescendants()) do
+				if v:IsA("TextLabel") then
+					txt = v
+					break
+				end
+			end
+		end
+	end
 
 	if txt then
 		txt.Text = text
@@ -111,8 +127,8 @@ local function showNotification(text, color)
 	end
 
 	task.delay(5, function()
-		if clone then
-			clone:Destroy()
+		if templateClone then
+			templateClone:Destroy()
 		end
 	end)
 end
@@ -133,6 +149,67 @@ failSound.SoundId = "rbxassetid://126210834885859"
 failSound.Volume = 0.5
 failSound.Parent = warningTemplate
 
+-- ACCEPT CHECK
+local function resetToDefault()
+	clicked = false
+	holding = false
+	spacer.BackgroundColor3 = defaultColor
+
+	if stroke then
+		stroke.Color = Color3.fromRGB(0, 0, 0)
+	end
+end
+
+local function isAccepted()
+	local other = tradeUI:FindFirstChild("Other")
+	if not other then
+		return false
+	end
+
+	local readyButton = other:FindFirstChild("ReadyButton")
+	if not readyButton then
+		return false
+	end
+
+	local txt = readyButton:FindFirstChild("Txt")
+	if not txt or not txt:IsA("TextLabel") then
+		return false
+	end
+
+	return txt.Text == "ACCEPT"
+end
+
+task.spawn(function()
+	local lastAccepted = false
+
+	while true do
+		local accepted = isAccepted()
+
+		if accepted and not lastAccepted then
+			resetToDefault()
+		elseif accepted then
+			resetToDefault()
+		end
+
+		lastAccepted = accepted
+		task.wait(0.05)
+	end
+end)
+
+local function connectAcceptedWatcher()
+	local other = tradeUI:WaitForChild("Other")
+	local readyButton = other:WaitForChild("ReadyButton")
+	local txt = readyButton:WaitForChild("Txt")
+
+	txt:GetPropertyChangedSignal("Text"):Connect(function()
+		if txt.Text == "ACCEPT" then
+			resetToDefault()
+		end
+	end)
+end
+
+task.spawn(connectAcceptedWatcher)
+
 -- INPUT HANDLING
 spacer.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -146,14 +223,17 @@ end)
 
 spacer.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		if not holding then return end
+		if not holding then
+			return
+		end
+
 		holding = false
 
 		if clickSound then
 			clickSound:Play()
 		end
 
-		-- ✅ REMOVE ITEM (NOW WITH SOUND + RED NOTIF)
+		-- If already selected, remove it instead of showing warning
 		if clicked then
 			clicked = false
 			spacer.BackgroundColor3 = defaultColor
@@ -162,20 +242,19 @@ spacer.InputEnded:Connect(function(input)
 				stroke.Color = Color3.fromRGB(0, 0, 0)
 			end
 
-			-- 🔊 PLAY FAIL SOUND
 			if failSound then
 				failSound:Play()
 			end
 
 			showNotification(
-				"Removed 'Admin Panel' from trade!",
+				"Failed to add 'Admin Panel' to trade!",
 				Color3.fromRGB(255, 0, 0)
 			)
 
 			return
 		end
 
-		-- SHOW WARNING
+		-- Default state shows warning
 		confirmationUI.Enabled = true
 		warningTemplate.Visible = true
 	end
@@ -212,11 +291,24 @@ noButton.MouseButton1Click:Connect(function()
 		failSound:Play()
 	end
 
-	local failClone = notifTemplate:Clone()
+	local failClone = notifTemplate and notifTemplate:Clone()
+
+	if not failClone then
+		warn("Template missing for fail notification")
+		return
+	end
+
+	failClone.Name = "Fail"
 	failClone.Parent = notificationUI
 	failClone.Visible = true
 
-	local txt = failClone:IsA("TextLabel") and failClone or failClone:FindFirstChild("Text", true)
+	local txt = nil
+
+	if failClone:IsA("TextLabel") then
+		txt = failClone
+	else
+		txt = failClone:FindFirstChild("Text", true)
+	end
 
 	if txt then
 		txt.Text = "Failed to add 'Admin Panel' to trade!"
@@ -230,29 +322,9 @@ noButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- ✅ CONSTANT ACCEPT CHECK
-task.spawn(function()
-	while true do
-		if otherReadyTxt.Text == "ACCEPTED" then
-			clicked = false
-			spacer.BackgroundColor3 = defaultColor
-
-			if stroke then
-				stroke.Color = Color3.fromRGB(0, 0, 0)
-			end
-		end
-		task.wait(0.1)
-	end
-end)
-
--- RESET WHEN UI CLOSES
+-- RESET WHEN TRADE UI CLOSES
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
-		clicked = false
-		spacer.BackgroundColor3 = defaultColor
-
-		if stroke then
-			stroke.Color = Color3.fromRGB(0, 0, 0)
-		end
+		resetToDefault()
 	end
 end)

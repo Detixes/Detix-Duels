@@ -1,14 +1,79 @@
 -- SERVICES
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- 🔥 ADDED: DRAGGABLE CONTROL UI
+local controlGui = Instance.new("ScreenGui")
+controlGui.Name = "APController"
+controlGui.Parent = playerGui
+controlGui.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 180, 0, 60)
+mainFrame.Position = UDim2.new(0.5, -90, 0.2, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = controlGui
+
+local uiCorner = Instance.new("UICorner", mainFrame)
+uiCorner.CornerRadius = UDim.new(0, 10)
+
+local addButton = Instance.new("TextButton")
+addButton.Size = UDim2.new(1, -20, 1, -20)
+addButton.Position = UDim2.new(0, 10, 0, 10)
+addButton.Text = "Add AP"
+addButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
+addButton.TextColor3 = Color3.new(1,1,1)
+addButton.Font = Enum.Font.GothamBold
+addButton.TextSize = 16
+addButton.Parent = mainFrame
+
+Instance.new("UICorner", addButton)
+
+-- DRAGGING
+local dragging = false
+local dragInput, dragStart, startPos
+
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+-- ORIGINAL SCRIPT STARTS HERE (UNCHANGED)
+
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
-
 template.Visible = true
-
 local cash = spacer:WaitForChild("Cash")
 local title = spacer:WaitForChild("Title")
 local stroke = spacer:FindFirstChildOfClass("UIStroke")
@@ -23,7 +88,6 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 local notifTemplate = notificationUI:FindFirstChild("Template")
-
 if not notifTemplate then
 	notifTemplate = notificationUI:WaitForChild("Template", 5)
 end
@@ -36,7 +100,6 @@ local strokeClickedColor = Color3.fromRGB(15, 255, 15)
 
 cash.Text = "9,999"
 title.Text = "[🎁] Admin Panel"
-
 description.Text = "The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
 -- IMAGE
@@ -99,7 +162,6 @@ local function showNotification(text, color)
 	templateClone.Visible = true
 
 	local txt = nil
-
 	if templateClone:IsA("TextLabel") then
 		txt = templateClone
 	else
@@ -155,13 +217,10 @@ end
 local function isAccepted()
 	local other = tradeUI:FindFirstChild("Other")
 	if not other then return false end
-
 	local readyButton = other:FindFirstChild("ReadyButton")
 	if not readyButton then return false end
-
 	local txt = readyButton:FindFirstChild("Txt")
 	if not txt or not txt:IsA("TextLabel") then return false end
-
 	return txt.Text == "ACCEPT"
 end
 
@@ -208,22 +267,18 @@ spacer.InputEnded:Connect(function(input)
 		if not holding then return end
 		holding = false
 
-		if clickSound then
-			clickSound:Play()
-		end
+		if clickSound then clickSound:Play() end
 
 		if clicked then
 			clicked = false
 			spacer.BackgroundColor3 = defaultColor
-			if stroke then
-				stroke.Color = Color3.fromRGB(0, 0, 0)
-			end
+			if stroke then stroke.Color = Color3.fromRGB(0, 0, 0) end
+			if failSound then failSound:Play() end
 
-			if failSound then
-				failSound:Play()
-			end
-
-			showNotification("Failed to add 'Admin Panel' to trade!", Color3.fromRGB(255, 0, 0))
+			showNotification(
+				"Failed to add 'Admin Panel' to trade!",
+				Color3.fromRGB(255, 0, 0)
+			)
 			return
 		end
 
@@ -237,18 +292,16 @@ yesButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	if yesSound then
-		yesSound:Play()
-	end
+	if yesSound then yesSound:Play() end
 
 	clicked = true
 	spacer.BackgroundColor3 = clickedColor
+	if stroke then stroke.Color = strokeClickedColor end
 
-	if stroke then
-		stroke.Color = strokeClickedColor
-	end
-
-	showNotification("Successfully added 'Admin Panel' to trade!", Color3.fromRGB(0, 255, 0))
+	showNotification(
+		"Successfully added 'Admin Panel' to trade!",
+		Color3.fromRGB(0, 255, 0)
+	)
 end)
 
 -- NO BUTTON
@@ -256,9 +309,7 @@ noButton.MouseButton1Click:Connect(function()
 	warningTemplate.Visible = false
 	confirmationUI.Enabled = false
 
-	if failSound then
-		failSound:Play()
-	end
+	if failSound then failSound:Play() end
 
 	local failClone = notifTemplate and notifTemplate:Clone()
 	if not failClone then
@@ -296,51 +347,9 @@ tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	end
 end)
 
---------------------------------------------------------------------
----------------------- 🔥 ADDED CODE BELOW 🔥 -----------------------
---------------------------------------------------------------------
-
--- DRAGGABLE UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = playerGui
-screenGui.Name = "AP_Drag_UI"
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 180, 0, 60)
-frame.Position = UDim2.new(0, 200, 0, 200)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-frame.Parent = screenGui
-
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
-uiCorner.Parent = frame
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(1, -20, 1, -20)
-button.Position = UDim2.new(0, 10, 0, 10)
-button.Text = "Add AP"
-button.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
-button.TextColor3 = Color3.new(1,1,1)
-button.Font = Enum.Font.GothamBold
-button.TextSize = 18
-button.Parent = frame
-
-local btnCorner = Instance.new("UICorner")
-btnCorner.Parent = button
-
--- BUTTON FUNCTION
-button.MouseButton1Click:Connect(function()
+-- 🔥 ADDED: BUTTON CREATES NEW ADMIN PANEL
+addButton.MouseButton1Click:Connect(function()
 	local clone = template:Clone()
 	clone.Parent = scrollingFrame
 	clone.Visible = true
-
-	local newSpacer = clone:FindFirstChild("Spacer")
-	if newSpacer then
-		newSpacer.BackgroundColor3 = defaultColor
-	end
-
-	showNotification("New Admin Panel added!", Color3.fromRGB(0,255,255))
 end)

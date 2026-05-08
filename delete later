@@ -41,10 +41,6 @@ end
 
 -- Image IDs
 local imageIds = {
-	"rbxassetid://103610037004911",
-	"rbxassetid://104964195846833",
-	"rbxassetid://110723387483939",
-	"rbxassetid://115664804212096",
 	"rbxassetid://99181785766598",
 	"rbxassetid://134655415681926",
 	"rbxassetid://121100427764858",

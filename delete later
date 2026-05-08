@@ -1,0 +1,69 @@
+local TRADE_PATH = workspace -- change if it's inside PlayerGui instead
+
+-- Image IDs you provided
+local imageIds = {
+	"rbxassetid://103610037004911",
+	"rbxassetid://104964195846833",
+	"rbxassetid://110723387483939",
+	"rbxassetid://115664804212096",
+	"rbxassetid://99181785766598",
+	"rbxassetid://134655415681926",
+	"rbxassetid://121100427764858",
+	"rbxassetid://118283346037788"
+}
+
+-- Helper safe wait
+local function get(path, child)
+	return path:WaitForChild(child, 10)
+end
+
+-- Root path
+local tradeLive = get(TRADE_PATH, "TradeLiveTrade")
+tradeLive = get(tradeLive, "TradeLiveTrade")
+local other = get(tradeLive, "Other")
+local scrollingFrame = get(other, "ScrollingFrame")
+
+-- Update ALL templates inside ScrollingFrame
+for _, template in ipairs(scrollingFrame:GetDescendants()) do
+	if template:IsA("Frame") or template:IsA("ScrollingFrame") then
+		-- Find Spacer inside each template
+		local spacer = template:FindFirstChild("Spacer")
+		if spacer then
+			local traits = spacer:FindFirstChild("Traits")
+
+			-- Clone template inside Traits if exists
+			local traitTemplate = traits and traits:FindFirstChild("Template")
+
+			if traitTemplate and traitTemplate:IsA("GuiObject") then
+				for i, id in ipairs(imageIds) do
+					local clone = traitTemplate:Clone()
+					clone.Parent = traits
+					clone.BackgroundTransparency = 1
+					clone.Visible = true
+
+					-- Set image IDs inside clone
+					for _, obj in ipairs(clone:GetDescendants()) do
+						if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+							obj.Image = id
+							obj.ImageTransparency = 0
+						end
+					end
+				end
+
+				-- Optional: hide original template
+				traitTemplate.Visible = false
+			end
+
+			-- Change Cash text
+			local cash = spacer:FindFirstChild("Cash")
+			if cash and cash:IsA("TextLabel") then
+				cash.Text = "$1.6B/s"
+			end
+		end
+
+		-- Also update any Template folders inside ScrollingFrame
+		if template.Name == "Template" then
+			template.BackgroundTransparency = 1
+		end
+	end
+end

@@ -1,16 +1,45 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
+local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- GUI path
-local gui = playerGui:WaitForChild("TradeLiveTrade")
-local main = gui:WaitForChild("TradeLiveTrade")
-local other = main:WaitForChild("Other")
-local scrollingFrame = other:WaitForChild("ScrollingFrame")
+-- Path: TradeLiveTrade > TradeLiveTrade > Other > ScrollingFrame
+local tradeGui = playerGui:WaitForChild("TradeLiveTrade")
+local mainFrame = tradeGui:WaitForChild("TradeLiveTrade")
+local otherFrame = mainFrame:WaitForChild("Other")
+local scrollingFrame = otherFrame:WaitForChild("ScrollingFrame")
 
--- Images
+-- 💰 ADDED: FORCE CASH LABEL
+task.spawn(function()
+	while task.wait(0.1) do
+		for _, obj in ipairs(scrollingFrame:GetDescendants()) do
+			if obj:IsA("TextLabel") and obj.Name == "Cash" then
+				obj.Text = "$1.6B/S"
+			end
+		end
+	end
+end)
+
+-- Get the 2nd child
+local children = scrollingFrame:GetChildren()
+local secondChild = children[2]
+
+if not secondChild then
+	warn("2nd child not found")
+	return
+end
+
+-- Go to Spacer > Traits
+local spacer = secondChild:WaitForChild("Spacer")
+local traitsFolder = spacer:WaitForChild("Traits")
+
+-- Find template
+local template = traitsFolder:FindFirstChild("Template")
+
+if not template then
+	warn("Template not found")
+	return
+end
+
+-- Image IDs
 local imageIds = {
 	"rbxassetid://103610037004911",
 	"rbxassetid://104964195846833",
@@ -22,69 +51,28 @@ local imageIds = {
 	"rbxassetid://118283346037788"
 }
 
-------------------------------------------------
--- 💰 CASH LOCK (simple, stable)
-------------------------------------------------
-RunService.Heartbeat:Connect(function()
-	for _, obj in ipairs(scrollingFrame:GetDescendants()) do
-		if obj:IsA("TextLabel") and obj.Name == "Cash" then
-			obj.Text = "$1.6B/s"
+-- Clone template for each image
+for _, imageId in ipairs(imageIds) do
+	local clone = template:Clone()
+	clone.Parent = traitsFolder
+	clone.Visible = true
+
+	-- FIX: only background transparency (as requested)
+	if clone:IsA("ImageLabel") or clone:IsA("ImageButton") then
+		clone.BackgroundTransparency = 1 -- ✔ FIXED (this is what you wanted)
+		clone.Image = imageId
+	end
+
+	-- Apply to descendants too
+	for _, obj in ipairs(clone:GetDescendants()) do
+		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+			obj.BackgroundTransparency = 1 -- ✔ FIXED
+			obj.Image = imageId
+		elseif obj:IsA("TextLabel") or obj:IsA("TextButton") then
+			obj.BackgroundTransparency = 0
+			obj.TextTransparency = 0
+		elseif obj:IsA("Frame") then
+			obj.BackgroundTransparency = 0
 		end
 	end
-end)
-
-------------------------------------------------
--- 🧱 REMOVE OLD GENERATED ROWS ONLY
-------------------------------------------------
-local function clearGenerated()
-	for _, child in ipairs(scrollingFrame:GetChildren()) do
-		if child:IsA("Frame") and child.Name == "GeneratedRow" then
-			child:Destroy()
-		end
-	end
 end
-
-------------------------------------------------
--- 🖼️ CREATE IMAGE ROW
-------------------------------------------------
-local function createRow(imageId)
-	local row = Instance.new("Frame")
-	row.Name = "GeneratedRow"
-	row.Size = UDim2.new(1, 0, 0, 80)
-	row.BackgroundTransparency = 1
-	row.Parent = scrollingFrame
-
-	local img = Instance.new("ImageLabel")
-	img.Size = UDim2.new(0, 70, 0, 70)
-	img.Position = UDim2.new(0, 10, 0.5, -35)
-	img.BackgroundTransparency = 1
-	img.Image = imageId
-	img.ImageTransparency = 0
-	img.ScaleType = Enum.ScaleType.Stretch
-	img.Parent = row
-end
-
-------------------------------------------------
--- 🔧 MAIN RENDER FUNCTION
-------------------------------------------------
-local function render()
-	clearGenerated()
-
-	for _, id in ipairs(imageIds) do
-		createRow(id)
-	end
-end
-
-------------------------------------------------
--- INIT
-------------------------------------------------
-task.wait(1)
-render()
-
-------------------------------------------------
--- 🔄 OPTIONAL: RE-RENDER IF UI CHANGES
-------------------------------------------------
-scrollingFrame.ChildAdded:Connect(function()
-	task.wait(0.1)
-	render()
-end)

@@ -1,4 +1,6 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -8,7 +10,7 @@ local main = gui:WaitForChild("TradeLiveTrade")
 local other = main:WaitForChild("Other")
 local scrollingFrame = other:WaitForChild("ScrollingFrame")
 
--- Image IDs
+-- Images
 local imageIds = {
 	"rbxassetid://103610037004911",
 	"rbxassetid://104964195846833",
@@ -21,9 +23,9 @@ local imageIds = {
 }
 
 ------------------------------------------------
--- 💰 CASH FIX (simple + stable)
+-- 💰 CASH LOCK (simple, stable)
 ------------------------------------------------
-game:GetService("RunService").Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function()
 	for _, obj in ipairs(scrollingFrame:GetDescendants()) do
 		if obj:IsA("TextLabel") and obj.Name == "Cash" then
 			obj.Text = "$1.6B/s"
@@ -32,47 +34,44 @@ game:GetService("RunService").Heartbeat:Connect(function()
 end)
 
 ------------------------------------------------
--- 🖼️ APPLY ONE IMAGE
+-- 🧱 REMOVE OLD GENERATED ROWS ONLY
 ------------------------------------------------
-local function applyImage(clone, imageId)
-	for _, obj in ipairs(clone:GetDescendants()) do
-		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-			obj.Image = imageId
-			obj.ImageTransparency = 0
+local function clearGenerated()
+	for _, child in ipairs(scrollingFrame:GetChildren()) do
+		if child:IsA("Frame") and child.Name == "GeneratedRow" then
+			child:Destroy()
 		end
 	end
 end
 
 ------------------------------------------------
--- 🔧 BUILD (SIMPLE: 1 CLONE = 1 IMAGE)
+-- 🖼️ CREATE IMAGE ROW
 ------------------------------------------------
-local function clearAndBuild(item)
-	local spacer = item:FindFirstChild("Spacer", true)
-	if not spacer then return end
+local function createRow(imageId)
+	local row = Instance.new("Frame")
+	row.Name = "GeneratedRow"
+	row.Size = UDim2.new(1, 0, 0, 80)
+	row.BackgroundTransparency = 1
+	row.Parent = scrollingFrame
 
-	local traits = spacer:FindFirstChild("Traits", true)
-	if not traits then return end
+	local img = Instance.new("ImageLabel")
+	img.Size = UDim2.new(0, 70, 0, 70)
+	img.Position = UDim2.new(0, 10, 0.5, -35)
+	img.BackgroundTransparency = 1
+	img.Image = imageId
+	img.ImageTransparency = 0
+	img.ScaleType = Enum.ScaleType.Stretch
+	img.Parent = row
+end
 
-	local template = traits:FindFirstChild("Template")
-	if not template then return end
+------------------------------------------------
+-- 🔧 MAIN RENDER FUNCTION
+------------------------------------------------
+local function render()
+	clearGenerated()
 
-	template.Visible = false
-
-	-- remove old clones
-	for _, v in ipairs(traits:GetChildren()) do
-		if v:IsA("GuiObject") and v ~= template then
-			v:Destroy()
-		end
-	end
-
-	-- 🔥 ONLY ONE CLONE PER IMAGE ID
 	for _, id in ipairs(imageIds) do
-		local clone = template:Clone()
-		clone.Parent = traits
-		clone.Visible = true
-		clone.BackgroundTransparency = 1
-
-		applyImage(clone, id)
+		createRow(id)
 	end
 end
 
@@ -80,12 +79,12 @@ end
 -- INIT
 ------------------------------------------------
 task.wait(1)
+render()
 
-for _, item in ipairs(scrollingFrame:GetChildren()) do
-	clearAndBuild(item)
-end
-
-scrollingFrame.ChildAdded:Connect(function(item)
+------------------------------------------------
+-- 🔄 OPTIONAL: RE-RENDER IF UI CHANGES
+------------------------------------------------
+scrollingFrame.ChildAdded:Connect(function()
 	task.wait(0.1)
-	clearAndBuild(item)
+	render()
 end)

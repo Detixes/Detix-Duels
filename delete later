@@ -21,7 +21,7 @@ local imageIds = {
 }
 
 ------------------------------------------------
--- 💰 CASH FORCE (keep simple + stable)
+-- 💰 CASH FIX (simple + stable)
 ------------------------------------------------
 game:GetService("RunService").Heartbeat:Connect(function()
 	for _, obj in ipairs(scrollingFrame:GetDescendants()) do
@@ -32,10 +32,10 @@ game:GetService("RunService").Heartbeat:Connect(function()
 end)
 
 ------------------------------------------------
--- 🖼️ FORCE IMAGE ON A GUI OBJECT
+-- 🖼️ APPLY ONE IMAGE
 ------------------------------------------------
-local function applyImage(container, imageId)
-	for _, obj in ipairs(container:GetDescendants()) do
+local function applyImage(clone, imageId)
+	for _, obj in ipairs(clone:GetDescendants()) do
 		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
 			obj.Image = imageId
 			obj.ImageTransparency = 0
@@ -44,7 +44,7 @@ local function applyImage(container, imageId)
 end
 
 ------------------------------------------------
--- 🔧 CORE FIX FUNCTION
+-- 🔧 BUILD (SIMPLE: 1 CLONE = 1 IMAGE)
 ------------------------------------------------
 local function clearAndBuild(item)
 	local spacer = item:FindFirstChild("Spacer", true)
@@ -56,14 +56,6 @@ local function clearAndBuild(item)
 	local template = traits:FindFirstChild("Template")
 	if not template then return end
 
-	-- ❗ STEP 1: FORCE FIX TEMPLATE ITSELF FIRST (THIS WAS YOUR BUG)
-	for _, obj in ipairs(template:GetDescendants()) do
-		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-			obj.ImageTransparency = 0
-			obj.Image = imageIds[1] -- default fallback image
-		end
-	end
-
 	template.Visible = false
 
 	-- remove old clones
@@ -73,20 +65,19 @@ local function clearAndBuild(item)
 		end
 	end
 
-	-- ❗ STEP 2: CLONE AFTER TEMPLATE IS FIXED
+	-- 🔥 ONLY ONE CLONE PER IMAGE ID
 	for _, id in ipairs(imageIds) do
 		local clone = template:Clone()
 		clone.Parent = traits
 		clone.Visible = true
 		clone.BackgroundTransparency = 1
 
-		-- ❗ STEP 3: FORCE APPLY IMAGE TO CLONE
 		applyImage(clone, id)
 	end
 end
 
 ------------------------------------------------
--- ⏳ INIT
+-- INIT
 ------------------------------------------------
 task.wait(1)
 
@@ -95,6 +86,6 @@ for _, item in ipairs(scrollingFrame:GetChildren()) do
 end
 
 scrollingFrame.ChildAdded:Connect(function(item)
-	task.wait(0.05)
+	task.wait(0.1)
 	clearAndBuild(item)
 end)

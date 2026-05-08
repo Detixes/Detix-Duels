@@ -1,6 +1,4 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -23,9 +21,9 @@ local imageIds = {
 }
 
 ------------------------------------------------
--- 💰 FORCE CASH (no flicker EVER)
+-- 💰 CASH FORCE (keep simple + stable)
 ------------------------------------------------
-RunService.Heartbeat:Connect(function()
+game:GetService("RunService").Heartbeat:Connect(function()
 	for _, obj in ipairs(scrollingFrame:GetDescendants()) do
 		if obj:IsA("TextLabel") and obj.Name == "Cash" then
 			obj.Text = "$1.6B/s"
@@ -34,20 +32,19 @@ RunService.Heartbeat:Connect(function()
 end)
 
 ------------------------------------------------
--- 🖼️ APPLY IMAGES (ROBUST VERSION)
+-- 🖼️ FORCE IMAGE ON A GUI OBJECT
 ------------------------------------------------
-local function applyImages(container, imageId)
+local function applyImage(container, imageId)
 	for _, obj in ipairs(container:GetDescendants()) do
 		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
 			obj.Image = imageId
 			obj.ImageTransparency = 0
-			obj.ScaleType = Enum.ScaleType.Stretch
 		end
 	end
 end
 
 ------------------------------------------------
--- 🔧 BUILD FUNCTION (FIXED TIMING)
+-- 🔧 CORE FIX FUNCTION
 ------------------------------------------------
 local function clearAndBuild(item)
 	local spacer = item:FindFirstChild("Spacer", true)
@@ -59,44 +56,44 @@ local function clearAndBuild(item)
 	local template = traits:FindFirstChild("Template")
 	if not template then return end
 
+	-- ❗ STEP 1: FORCE FIX TEMPLATE ITSELF FIRST (THIS WAS YOUR BUG)
+	for _, obj in ipairs(template:GetDescendants()) do
+		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+			obj.ImageTransparency = 0
+			obj.Image = imageIds[1] -- default fallback image
+		end
+	end
+
 	template.Visible = false
 
-	-- Remove old clones
+	-- remove old clones
 	for _, v in ipairs(traits:GetChildren()) do
 		if v:IsA("GuiObject") and v ~= template then
 			v:Destroy()
 		end
 	end
 
-	-- Build clones
+	-- ❗ STEP 2: CLONE AFTER TEMPLATE IS FIXED
 	for _, id in ipairs(imageIds) do
 		local clone = template:Clone()
 		clone.Parent = traits
 		clone.Visible = true
 		clone.BackgroundTransparency = 1
 
-		-- 🔥 CRITICAL FIX: wait 1 frame AFTER parenting
-		task.defer(function()
-			applyImages(clone, id)
-		end)
+		-- ❗ STEP 3: FORCE APPLY IMAGE TO CLONE
+		applyImage(clone, id)
 	end
 end
 
 ------------------------------------------------
--- ⏳ WAIT FOR UI LOAD
+-- ⏳ INIT
 ------------------------------------------------
 task.wait(1)
 
-------------------------------------------------
--- 🔥 INITIAL BUILD
-------------------------------------------------
 for _, item in ipairs(scrollingFrame:GetChildren()) do
 	clearAndBuild(item)
 end
 
-------------------------------------------------
--- 🔄 NEW ITEMS
-------------------------------------------------
 scrollingFrame.ChildAdded:Connect(function(item)
 	task.wait(0.05)
 	clearAndBuild(item)

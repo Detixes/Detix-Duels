@@ -1,133 +1,523 @@
---// Dragon Canneloni 312M
---// LocalScript
-
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local UserInputService = game:GetService("UserInputService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 
---// GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "DragonCanneloniUI"
-gui.ResetOnSpawn = false
-gui.Parent = game.CoreGui
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 90)
-frame.Position = UDim2.new(0.5, -130, 0.5, -45)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-frame.Parent = gui
-
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0,170,1,0)
-title.BackgroundTransparency = 1
-title.Text = "Dragon Canneloni 312M"
-title.TextColor3 = Color3.new(1,1,1)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.Parent = frame
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0,70,0,40)
-button.Position = UDim2.new(1,-80,0.5,-20)
-button.BackgroundColor3 = Color3.fromRGB(0,170,255)
-button.Text = "Start"
-button.TextColor3 = Color3.new(1,1,1)
-button.TextScaled = true
-button.Font = Enum.Font.GothamBold
-button.Parent = frame
-
-Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
-
---// Noclip
-local noclipConnection
-
-local function enableNoclip(character)
-    if noclipConnection then
-        noclipConnection:Disconnect()
+-- [[ PHYSICS & RESET LOGIC ]]
+local function ResetToWork()
+    local flags = {
+        {"GameNetPVHeaderRotationalVelocityZeroCutoffExponent", "-5000"},
+        {"LargeReplicatorWrite5", "true"},
+        {"LargeReplicatorEnabled9", "true"},
+        {"AngularVelociryLimit", "360"},
+        {"TimestepArbiterVelocityCriteriaThresholdTwoDt", "2147483646"},
+        {"S2PhysicsSenderRate", "15000"},
+        {"DisableDPIScale", "true"},
+        {"MaxDataPacketPerSend", "2147483647"},
+        {"ServerMaxBandwith", "52"},
+        {"PhysicsSenderMaxBandwidthBps", "20000"},
+        {"MaxTimestepMultiplierBuoyancy", "2147483647"},
+        {"SimOwnedNOUCountThresholdMillionth", "2147483647"},
+        {"MaxMissedWorldStepsRemembered", "-2147483648"},
+        {"CheckPVDifferencesForInterpolationMinVelThresholdStudsPerSecHundredth", "1"},
+        {"StreamJobNOUVolumeLengthCap", "2147483647"},
+        {"DebugSendDistInSteps", "-2147483648"},
+        {"MaxTimestepMultiplierAcceleration", "2147483647"},
+        {"LargeReplicatorRead5", "true"},
+        {"SimExplicitlyCappedTimestepMultiplier", "2147483646"},
+        {"GameNetDontSendRedundantNumTimes", "1"},
+        {"CheckPVLinearVelocityIntegrateVsDeltaPositionThresholdPercent", "1"},
+        {"CheckPVCachedRotVelThresholdPercent", "10"},
+        {"LargeReplicatorSerializeRead3", "true"},
+        {"ReplicationFocusNouExtentsSizeCutoffForPauseStuds", "2147483647"},
+        {"NextGenReplicatorEnabledWrite4", "true"},
+        {"CheckPVDifferencesForInterpolationMinRotVelThresholdRadsPerSecHundredth", "1"},
+        {"GameNetDontSendRedundantDeltaPositionMillionth", "1"},
+        {"InterpolationFrameVelocityThresholdMillionth", "5"},
+        {"StreamJobNOUVolumeCap", "2147483647"},
+        {"InterpolationFrameRotVelocityThresholdMillionth", "5"},
+        {"WorldStepMax", "30"},
+        {"TimestepArbiterHumanoidLinearVelThreshold", "1"},
+        {"InterpolationFramePositionThresholdMillionth", "5"},
+        {"TimestepArbiterHumanoidTurningVelThreshold", "1"},
+        {"MaxTimestepMultiplierContstraint", "2147483647"},
+        {"GameNetPVHeaderLinearVelocityZeroCutoffExponent", "-5000"},
+        {"CheckPVCachedVelThresholdPercent", "10"},
+        {"TimestepArbiterOmegaThou", "1073741823"},
+        {"MaxAcceptableUpdateDelay", "1"},
+        {"LargeReplicatorSerializeWrite4", "true"},
+    }
+    for _, data in ipairs(flags) do
+        pcall(function() if setfflag then setfflag(data[1], data[2]) end end)
     end
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Dead) end
+        char:ClearAllChildren()
+        local f = Instance.new("Model", workspace)
+        player.Character = f task.wait()
+        player.Character = char f:Destroy()
+    end
+end
 
-    noclipConnection = RunService.Stepped:Connect(function()
-        for _, v in pairs(character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
+task.spawn(function() task.wait(1) ResetToWork() end)
+
+-- [[ COORDINATES AND DATA ]]
+local pos1 = Vector3.new(-352.98, -7, 74.30)            
+local pos2 = Vector3.new(-352.98, -6.49, 45.76)   
+local standing1 = Vector3.new(-336.36, -4.59, 99.51)
+local standing2 = Vector3.new(-334.81, -4.59, 18.90)
+
+-- Base visual positions
+local base1_pos = Vector3.new(-335.91, -4.91, 98.72)
+local base2_pos = Vector3.new(-336.37, -4.84, 18.16)
+
+-- Visual baseplate
+local visualBaseplate = nil
+local baseplateOutline = nil
+local floatConnection = nil
+
+local function createVisualBaseplate(position)
+    if visualBaseplate then visualBaseplate:Destroy() end
+    if baseplateOutline then baseplateOutline:Destroy() end
+    if floatConnection then floatConnection:Disconnect() end
+    
+    visualBaseplate = Instance.new("Part")
+    visualBaseplate.Name = "VisualBaseplate"
+    visualBaseplate.Shape = Enum.PartType.Block
+    visualBaseplate.Size = Vector3.new(4, 2, 4)
+    visualBaseplate.Position = position
+    visualBaseplate.Color = Color3.fromRGB(0, 0, 0)
+    visualBaseplate.Transparency = 0.2
+    visualBaseplate.CanCollide = false
+    visualBaseplate.Anchored = true
+    visualBaseplate.CFrame = CFrame.new(position)
+    visualBaseplate.TopSurface = Enum.SurfaceType.Smooth
+    visualBaseplate.BottomSurface = Enum.SurfaceType.Smooth
+    visualBaseplate.Parent = workspace
+    
+    baseplateOutline = Instance.new("Part")
+    baseplateOutline.Name = "BaseplateOutline"
+    baseplateOutline.Shape = Enum.PartType.Block
+    baseplateOutline.Size = Vector3.new(4.2, 2.2, 4.2)
+    baseplateOutline.Position = position
+    baseplateOutline.Color = Color3.fromRGB(255, 255, 255)
+    baseplateOutline.Transparency = 0.3
+    baseplateOutline.CanCollide = false
+    baseplateOutline.Anchored = true
+    baseplateOutline.CFrame = visualBaseplate.CFrame + Vector3.new(0, -0.1, 0)
+    baseplateOutline.TopSurface = Enum.SurfaceType.Smooth
+    baseplateOutline.BottomSurface = Enum.SurfaceType.Smooth
+    baseplateOutline.Parent = workspace
+    
+    -- Floating animation
+    local floatHeight = 0.5
+    local floatSpeed = 2
+    local time = 0
+    
+    floatConnection = RunService.Heartbeat:Connect(function(deltaTime)
+        if visualBaseplate and visualBaseplate.Parent then
+            time = time + deltaTime
+            local floatOffset = math.sin(time * floatSpeed) * floatHeight
+            visualBaseplate.CFrame = CFrame.new(position + Vector3.new(0, floatOffset, 0))
+            if baseplateOutline and baseplateOutline.Parent then
+                baseplateOutline.CFrame = visualBaseplate.CFrame + Vector3.new(0, -0.1, 0)
             end
+        else
+            if floatConnection then floatConnection:Disconnect() end
         end
     end)
 end
 
---// Fire ALL prompts in radius
-local function fireNearbyPrompts(position)
-    local radius = 25
+-- Podium positions swapped: old spot2 is now spot1, old spot1 is now spot2
+local spot1_sequence = {
+    CFrame.new(-354.782867, -7.00000334, 92.8209305, -0.999997616, -1.11891862e-09, -0.00218066527, -1.11958298e-09, 1, 3.03415071e-10, 0.00218066527, 3.05855785e-10, -0.999997616),
+    CFrame.new(-336.942902, -5.10106993, 99.3276443, 0.999914348, -3.63984611e-08, 0.0130875716, 3.67094941e-08, 1, -2.35254749e-08, -0.0130875716, 2.40038975e-08, 0.999914348)
+}
 
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") then
+local spot2_sequence = {
+    CFrame.new(-370.810913, -7.00000334, 41.2687263, 0.99984771, 1.22364419e-09, 0.0174523517, -6.54859778e-10, 1, -3.2596418e-08, -0.0174523517, 3.25800258e-08, 0.99984771),
+    CFrame.new(-336.355286, -5.10107088, 17.2327671, -0.999883354, -2.76150569e-08, 0.0152716246, -2.88224964e-08, 1, -7.88441525e-08, -0.0152716246, -7.9275118e-08, -0.999883354)
+}
 
-            local parent = obj.Parent
+-- [[ UI INITIALIZATION ]]
+if CoreGui:FindFirstChild("AriesHubGui") then 
+    CoreGui["AriesHubGui"]:Destroy() 
+end
 
-            if parent and parent:IsA("BasePart") then
-                local dist = (parent.Position - position).Magnitude
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AriesHubGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = CoreGui
 
-                if dist <= radius then
-                    obj.HoldDuration = 0
-                    obj.RequiresLineOfSight = false
-                    obj.MaxActivationDistance = 9999
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 160, 0, 105)
+mainFrame.Position = UDim2.new(1, -170, 0.5, -52)
+mainFrame.AnchorPoint = Vector2.new(0, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.BackgroundTransparency = 0.15
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Parent = screenGui
 
-                    pcall(function()
-                        fireproximityprompt(obj, 0)
-                    end)
-                end
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 2.5
+uiStroke.Color = Color3.fromRGB(255, 255, 255)
+uiStroke.Parent = mainFrame
+
+
+
+-- [[ ZERO HUB BANNER ]]
+local bannerFrame = Instance.new("Frame")
+bannerFrame.Name = "ZeroHubBanner"
+bannerFrame.Size = UDim2.new(0, 150, 0, 32)
+bannerFrame.Position = UDim2.new(0.5, -75, 0, 14)
+bannerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+bannerFrame.BackgroundTransparency = 0.15
+bannerFrame.BorderSizePixel = 0
+bannerFrame.Parent = screenGui
+
+local bannerCorner = Instance.new("UICorner")
+bannerCorner.CornerRadius = UDim.new(0, 8)
+bannerCorner.Parent = bannerFrame
+
+local bannerStroke = Instance.new("UIStroke")
+bannerStroke.Thickness = 2
+bannerStroke.Color = Color3.fromRGB(255, 255, 255)
+bannerStroke.Parent = bannerFrame
+
+-- Create one TextLabel per letter for individual color control
+local bannerText = "ZERO HUB"
+local letterLabels = {}
+local totalLetters = #bannerText
+local letterWidth = 150 / totalLetters
+
+for i = 1, totalLetters do
+    local char = bannerText:sub(i, i)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, letterWidth, 1, 0)
+    lbl.Position = UDim2.new(0, (i - 1) * letterWidth, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = char
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.TextSize = 16
+    lbl.Font = Enum.Font.GothamBold
+    lbl.Parent = bannerFrame
+    table.insert(letterLabels, lbl)
+end
+
+-- Animate letters white -> black one by one with smooth tween, then black -> white one by one
+task.spawn(function()
+    while true do
+        -- Fade each letter to black one by one
+        for i = 1, totalLetters do
+            if letterLabels[i] then
+                TweenService:Create(letterLabels[i], TweenInfo.new(0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(0, 0, 0)}):Play()
             end
+            task.wait(0.1)
+        end
+        task.wait(0.35)
+        -- Fade each letter back to white one by one
+        for i = 1, totalLetters do
+            if letterLabels[i] then
+                TweenService:Create(letterLabels[i], TweenInfo.new(0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            end
+            task.wait(0.1)
+        end
+        task.wait(0.35)
+    end
+end)
+
+
+local IsStealing = false
+local StealProgress = 0
+local allAnimalsCache = {}
+local PromptMemoryCache = {}
+local InternalStealCache = {}
+
+-- Speed after steal always active
+local SPEED_BOOST = 28
+local speedConnection = nil
+
+local function applyPostStealEffects()
+    local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if hum and root then
+        if speedConnection then speedConnection:Disconnect() end
+        speedConnection = RunService.Heartbeat:Connect(function()
+            if hum.MoveDirection.Magnitude == 0 or not root.Parent then return end
+            root.AssemblyLinearVelocity = Vector3.new(hum.MoveDirection.X * SPEED_BOOST, root.AssemblyLinearVelocity.Y, hum.MoveDirection.Z * SPEED_BOOST)
+        end)
+    end
+end
+
+-- [[ PODIUM SELECTOR ]]
+local selectedSequence = spot1_sequence
+local podiumOptions = {
+    { label = "Base 1", sequence = spot1_sequence, position = base1_pos },
+    { label = "Base 2", sequence = spot2_sequence, position = base2_pos },
+}
+local currentPodiumIndex = 1
+local dropdownOpen = false
+
+local selectorHeader = Instance.new("TextLabel")
+selectorHeader.Size = UDim2.new(0.9, 0, 0, 16)
+selectorHeader.Position = UDim2.new(0.05, 0, 0, 8)
+selectorHeader.BackgroundTransparency = 1
+selectorHeader.Text = "Select Base"
+selectorHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+selectorHeader.TextSize = 10
+selectorHeader.Font = Enum.Font.GothamMedium
+selectorHeader.TextXAlignment = Enum.TextXAlignment.Left
+selectorHeader.Parent = mainFrame
+
+local dropdownBtn = Instance.new("TextButton")
+dropdownBtn.Size = UDim2.new(0.9, 0, 0, 28)
+dropdownBtn.Position = UDim2.new(0.05, 0, 0, 25)
+dropdownBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+dropdownBtn.BorderSizePixel = 0
+dropdownBtn.Text = ""
+dropdownBtn.Parent = mainFrame
+local dropdownBtnCorner = Instance.new("UICorner")
+dropdownBtnCorner.CornerRadius = UDim.new(0, 6)
+dropdownBtnCorner.Parent = dropdownBtn
+local dropdownStroke = Instance.new("UIStroke")
+dropdownStroke.Thickness = 1
+dropdownStroke.Color = Color3.fromRGB(255, 255, 255)
+dropdownStroke.Parent = dropdownBtn
+
+local dropdownLabel = Instance.new("TextLabel")
+dropdownLabel.Size = UDim2.new(1, -10, 1, 0)
+dropdownLabel.Position = UDim2.new(0, 10, 0, 0)
+dropdownLabel.BackgroundTransparency = 1
+dropdownLabel.Text = "Base 1 ▼"
+dropdownLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+dropdownLabel.TextSize = 12
+dropdownLabel.Font = Enum.Font.GothamMedium
+dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+dropdownLabel.Parent = dropdownBtn
+
+local dropdownList = Instance.new("Frame")
+dropdownList.Size = UDim2.new(0.9, 0, 0, #podiumOptions * 28)
+dropdownList.Position = UDim2.new(0.05, 0, 0, 54)
+dropdownList.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+dropdownList.BorderSizePixel = 0
+dropdownList.Visible = false
+dropdownList.ZIndex = 10
+dropdownList.Parent = mainFrame
+local dropdownListCorner = Instance.new("UICorner")
+dropdownListCorner.CornerRadius = UDim.new(0, 6)
+dropdownListCorner.Parent = dropdownList
+local dropdownListStroke = Instance.new("UIStroke")
+dropdownListStroke.Thickness = 1
+dropdownListStroke.Color = Color3.fromRGB(255, 255, 255)
+dropdownListStroke.Parent = dropdownList
+
+for i, option in ipairs(podiumOptions) do
+    local item = Instance.new("TextButton")
+    item.Size = UDim2.new(1, 0, 0, 28)
+    item.Position = UDim2.new(0, 0, 0, (i - 1) * 28)
+    item.BackgroundTransparency = 1
+    item.Text = option.label
+    item.TextColor3 = Color3.fromRGB(200, 200, 200)
+    item.TextSize = 12
+    item.Font = Enum.Font.GothamMedium
+    item.ZIndex = 11
+    item.Parent = dropdownList
+
+    item.MouseEnter:Connect(function()
+        item.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        TweenService:Create(item, TweenInfo.new(0.1), {BackgroundTransparency = 0.7}):Play()
+    end)
+    item.MouseLeave:Connect(function()
+        TweenService:Create(item, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
+    end)
+
+    item.MouseButton1Click:Connect(function()
+        currentPodiumIndex = i
+        selectedSequence = option.sequence
+        dropdownLabel.Text = option.label .. " ▼"
+        dropdownList.Visible = false
+        dropdownOpen = false
+        createVisualBaseplate(option.position)
+    end)
+end
+
+dropdownBtn.MouseButton1Click:Connect(function()
+    dropdownOpen = not dropdownOpen
+    dropdownList.Visible = dropdownOpen
+    dropdownLabel.Text = podiumOptions[currentPodiumIndex].label .. (dropdownOpen and " ▲" or " ▼")
+end)
+
+-- [[ TELEPORT BUTTON ]]
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(0.9, 0, 0, 30)
+tpButton.Position = UDim2.new(0.05, 0, 0, 65)
+tpButton.Text = "Teleport"
+tpButton.Font = Enum.Font.GothamBold
+tpButton.TextSize = 14
+tpButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+tpButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+tpButton.ZIndex = 2
+tpButton.Parent = mainFrame
+local tpCorner = Instance.new("UICorner")
+tpCorner.CornerRadius = UDim.new(0, 6)
+tpCorner.Parent = tpButton
+local tpStroke = Instance.new("UIStroke")
+tpStroke.Thickness = 1.5
+tpStroke.Color = Color3.fromRGB(255, 255, 255)
+tpStroke.Parent = tpButton
+
+tpButton.MouseEnter:Connect(function()
+    TweenService:Create(tpButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(210, 210, 210)}):Play()
+end)
+tpButton.MouseLeave:Connect(function()
+    TweenService:Create(tpButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+end)
+
+tpButton.MouseButton1Click:Connect(function()
+    handleSteal(selectedSequence)
+    
+    -- Equip Flying Carpet
+    task.wait(0.1)
+    local playerBackpack = player:WaitForChild("Backpack")
+    local flyingCarpet = playerBackpack:FindFirstChild("Flying Carpet")
+    
+    if flyingCarpet then
+        flyingCarpet.Parent = player.Character
+    end
+end)
+
+-- [[ HELPER FUNCTIONS ]]
+local function getHRP()
+    local char = player.Character
+    return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso"))
+end
+
+local function scanSinglePlot(plot)
+    if not plot or not plot:IsA("Model") then return end
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign and sign:FindFirstChild("YourBase") and sign.YourBase.Enabled then return end
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return end
+    for _, podium in ipairs(podiums:GetChildren()) do
+        if podium:IsA("Model") and podium:FindFirstChild("Base") then
+            table.insert(allAnimalsCache, {
+                plot = plot.Name, slot = podium.Name,
+                worldPosition = podium:GetPivot().Position,
+                uid = plot.Name .. "_" .. podium.Name,
+            })
         end
     end
 end
 
---// Main
-button.MouseButton1Click:Connect(function()
+local function initializeScanner()
+    task.wait(2)
+    local plots = workspace:WaitForChild("Plots", 10)
+    for _, plot in ipairs(plots:GetChildren()) do scanSinglePlot(plot) end
+    plots.ChildAdded:Connect(scanSinglePlot)
+    task.spawn(function()
+        while task.wait(5) do
+            table.clear(allAnimalsCache)
+            for _, plot in ipairs(plots:GetChildren()) do scanSinglePlot(plot) end
+        end
+    end)
+end
 
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
-    local hrp = character:WaitForChild("HumanoidRootPart")
+local function findPrompt(animal)
+    local cached = PromptMemoryCache[animal.uid]
+    if cached and cached.Parent then return cached end
+    local plot = workspace.Plots:FindFirstChild(animal.plot)
+    local podium = plot and plot.AnimalPodiums:FindFirstChild(animal.slot)
+    local prompt = podium and podium.Base.Spawn.PromptAttachment:FindFirstChildOfClass("ProximityPrompt")
+    if prompt then PromptMemoryCache[animal.uid] = prompt end
+    return prompt
+end
 
-    -- Equip first tool
-    local backpack = player:WaitForChild("Backpack")
-    local firstTool = backpack:FindFirstChildWhichIsA("Tool")
+local function getNearestAnimal()
+    local hrp = getHRP()
+    if not hrp then return nil end
+    local nearest, dist = nil, math.huge
+    for _, animal in ipairs(allAnimalsCache) do
+        local d = (hrp.Position - animal.worldPosition).Magnitude
+        if d < dist and d <= 200 then
+            dist = d
+            nearest = animal
+        end
+    end
+    return nearest
+end
 
-    if firstTool then
-        humanoid:EquipTool(firstTool)
+-- [[ STEAL HANDLER ]]
+function handleSteal(sequence)
+    if IsStealing then return end
+    local animal = getNearestAnimal()
+    local prompt = animal and findPrompt(animal)
+    if not prompt then return end
 
-        repeat
-            task.wait()
-        until character:FindFirstChild(firstTool.Name)
+    task.spawn(applyPostStealEffects)
+
+    local data = InternalStealCache[prompt]
+    if not data then
+        data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
+        local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
+        if ok1 then for _, c in ipairs(conns1) do table.insert(data.holdCallbacks, c.Function) end end
+        local ok2, conns2 = pcall(getconnections, prompt.Triggered)
+        if ok2 then for _, c in ipairs(conns2) do table.insert(data.triggerCallbacks, c.Function) end end
+        InternalStealCache[prompt] = data
     end
 
-    -- Teleport PLAYER
-    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+    IsStealing = true
+    task.spawn(function()
+        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
 
-    humanoid.WalkSpeed = 29
+        -- No progress bar logic always active
+        local hrp = getHRP()
+        if hrp then
+            hrp.CFrame = sequence[1] task.wait(0.1)
+            hrp.CFrame = sequence[2] task.wait(0.2)
+            local d1 = (hrp.Position - pos1).Magnitude
+            local d2 = (hrp.Position - pos2).Magnitude
+            hrp.CFrame = CFrame.new(d1 < d2 and pos1 or pos2)
+        end
 
-    task.wait(0.1)
+        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
+        task.wait(0.2)
+        IsStealing = false
+        StealProgress = 0
+    end)
+end
 
-    -- Fire ALL nearby prompts
-    fireNearbyPrompts(hrp.Position)
-
-    task.wait(0.8)
-
-    -- Teleport CAMERA 10 studs up
-    local camPos = camera.CFrame.Position + Vector3.new(0,10,0)
-
-    hrp.CFrame = CFrame.new(camPos)
-
-    humanoid.WalkSpeed = 59
-
-    -- Noclip
-    enableNoclip(character)
-
+-- [[ DRAGGING ]]
+local dragging, dragStart, startPos
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
 end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+initializeScanner()
+createVisualBaseplate(base1_pos)

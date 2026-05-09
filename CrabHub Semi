@@ -435,11 +435,11 @@ makeToggle("Half Tp", 75, function(state)
     semiTPEnabled = state
 end)
 
-makeToggle("Auto Potion", 100, function(state)
+makeToggle("Auto Potion", 90, function(state)
     _G.AutoPotion = state
 end)
 
-makeToggle("Base Walker", 125, function(state)
+makeToggle("Base Walker", 115, function(state)
     _G.BaseWalk = state
 
     if state then
@@ -449,7 +449,7 @@ makeToggle("Base Walker", 125, function(state)
     end
 end)
 
-makeToggle("Speed After Steal", 150, function(state)
+makeToggle("Speed After Steal", 130, function(state)
     speedAfterSteal = state
     if not state and speedConnection then
         speedConnection:Disconnect()

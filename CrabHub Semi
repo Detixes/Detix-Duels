@@ -515,35 +515,28 @@ local function makeToggle(labelText, yPos, callback)
     end)
 end
 
--- ─── Toggles ───────────────────────────────────────────────────────────────────
+-- ─── Create Toggles ───────────────────────────────────────────────
 
-makeToggle("Half Tp", 75, function(state)
-    semiTPEnabled = state
-end)
+_G.BaseWalk = true
 
 makeToggle("Auto Potion", 100, function(state)
-    _G.AutoPotion = state
-end)
-
-makeToggle("Base Walker", 125, function(state)
-    _G.BaseWalk = state
-
-    print("BaseWalk:", state)
-
-    if state then
-        print("hello")
-        startBaseWalk()
-    else
-        stopBaseWalk()
-    end
+	_G.AutoPotion = state
 end)
 
 makeToggle("Speed After Steal", 150, function(state)
-    speedAfterSteal = state
-    if not state and speedConnection then
-        speedConnection:Disconnect()
-        speedConnection = nil
-    end
+	speedAfterSteal = state
+	if not state and speedConnection then
+		speedConnection:Disconnect()
+		speedConnection = nil
+	end
+end)
+
+task.spawn(function()
+	task.wait(1)
+
+	if _G.BaseWalk then
+		startBaseWalk()
+	end
 end)
 
 -- ─── Helper ─────────────────────────────────────────────────────────

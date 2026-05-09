@@ -716,14 +716,9 @@ ProximityPromptService.PromptTriggered:Connect(function(prompt, plr)
     isHolding = false
 end)
 
-        if BaseWalk then
-print("Placeholder")
-                end)
-            end
-        end
-    end
-  isActive = false
-end)
+if _G.BaseWalk then
+    print("hello")
+end
 
 -- ─── Init ──────────────────────────────────────────────────────────────────────
 

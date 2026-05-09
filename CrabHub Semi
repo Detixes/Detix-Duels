@@ -442,7 +442,10 @@ end)
 makeToggle("Base Walker", 125, function(state)
     _G.BaseWalk = state
 
+    print("BaseWalk:", state)
+
     if state then
+        print("hello")
         startBaseWalk()
     else
         stopBaseWalk()

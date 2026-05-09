@@ -3,7 +3,7 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ProximityPromptService = game:GetService("ProximityPromptService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -17,16 +17,16 @@ gui.Parent = game.CoreGui
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 260, 0, 90)
 frame.Position = UDim2.new(0.5, -130, 0.5, -45)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 170, 1, 0)
+title.Size = UDim2.new(0,170,1,0)
 title.BackgroundTransparency = 1
 title.Text = "Dragon Canneloni 312M"
 title.TextColor3 = Color3.new(1,1,1)
@@ -35,8 +35,8 @@ title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
 local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 70, 0, 40)
-button.Position = UDim2.new(1, -80, 0.5, -20)
+button.Size = UDim2.new(0,70,0,40)
+button.Position = UDim2.new(1,-80,0.5,-20)
 button.BackgroundColor3 = Color3.fromRGB(0,170,255)
 button.Text = "Start"
 button.TextColor3 = Color3.new(1,1,1)
@@ -44,13 +44,7 @@ button.TextScaled = true
 button.Font = Enum.Font.GothamBold
 button.Parent = frame
 
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
-
---// Instant prompts globally
-ProximityPromptService.PromptShown:Connect(function(prompt)
-    prompt.HoldDuration = 0
-    prompt.RequiresLineOfSight = false
-end)
+Instance.new("UICorner", button).CornerRadius = UDim.new(0,8)
 
 --// Noclip
 local noclipConnection
@@ -69,38 +63,29 @@ local function enableNoclip(character)
     end)
 end
 
---// Trigger EVERY prompt in radius until one succeeds
-local function triggerNearbyPrompts(hrp)
+--// Fire ALL prompts in radius
+local function fireNearbyPrompts(position)
     local radius = 25
-    local success = false
 
-    while not success do
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("ProximityPrompt") and obj.Parent then
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
 
-                local parentPart = obj.Parent
+            local parent = obj.Parent
 
-                if parentPart:IsA("BasePart") then
-                    local distance = (hrp.Position - parentPart.Position).Magnitude
+            if parent and parent:IsA("BasePart") then
+                local dist = (parent.Position - position).Magnitude
 
-                    if distance <= radius then
-                        obj.HoldDuration = 0
-                        obj.RequiresLineOfSight = false
+                if dist <= radius then
+                    obj.HoldDuration = 0
+                    obj.RequiresLineOfSight = false
+                    obj.MaxActivationDistance = 9999
 
-                        local worked = pcall(function()
-                            fireproximityprompt(obj)
-                        end)
-
-                        if worked then
-                            success = true
-                            break
-                        end
-                    end
+                    pcall(function()
+                        fireproximityprompt(obj, 0)
+                    end)
                 end
             end
         end
-
-        task.wait(0.05)
     end
 end
 
@@ -118,33 +103,31 @@ button.MouseButton1Click:Connect(function()
     if firstTool then
         humanoid:EquipTool(firstTool)
 
-        -- Ensure equipped
         repeat
             task.wait()
         until character:FindFirstChild(firstTool.Name)
     end
 
-    -- Teleport
+    -- Teleport PLAYER
     hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
 
     humanoid.WalkSpeed = 29
 
-    -- Trigger every prompt in radius
-    triggerNearbyPrompts(hrp)
+    task.wait(0.1)
 
-    -- Wait
+    -- Fire ALL nearby prompts
+    fireNearbyPrompts(hrp.Position)
+
     task.wait(0.8)
 
-    -- Teleport back
-    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+    -- Teleport CAMERA 10 studs up
+    local camPos = camera.CFrame.Position + Vector3.new(0,10,0)
+
+    hrp.CFrame = CFrame.new(camPos)
 
     humanoid.WalkSpeed = 59
 
-    -- Enable noclip
+    -- Noclip
     enableNoclip(character)
-
-    -- Move 10 studs above camera
-    local camPos = camera.CFrame.Position
-    hrp.CFrame = CFrame.new(camPos + Vector3.new(0, 10, 0))
 
 end)

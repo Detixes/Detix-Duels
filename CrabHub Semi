@@ -796,12 +796,12 @@ local function createBeam()
 		beam.Attachment0 = playerAttachment
 		beam.Attachment1 = baseAttachment
 
-		beam.Width0 = 1.4
-		beam.Width1 = 1.4
+		beam.Width0 = 4
+		beam.Width1 = 4
 
 		beam.FaceCamera = true
 
-		beam.LightEmission = 1
+		beam.LightEmission = 3
 		beam.LightInfluence = 0
 
 		beam.Texture = "rbxassetid://446111271"

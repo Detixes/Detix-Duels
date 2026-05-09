@@ -1,0 +1,111 @@
+--// Dragon Canneloni 312M
+--// LocalScript
+
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+
+--// GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "DragonCanneloniUI"
+gui.ResetOnSpawn = false
+gui.Parent = game.CoreGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 90)
+frame.Position = UDim2.new(0.5, -130, 0.5, -45)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 170, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "Dragon Canneloni 312M"
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = frame
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 70, 0, 40)
+button.Position = UDim2.new(1, -80, 0.5, -20)
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.Text = "Start"
+button.TextColor3 = Color3.new(1,1,1)
+button.TextScaled = true
+button.Font = Enum.Font.GothamBold
+button.Parent = frame
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = button
+
+--// INSTANT PROXIMITY PROMPTS
+ProximityPromptService.PromptShown:Connect(function(prompt)
+    prompt.HoldDuration = 0
+    prompt.RequiresLineOfSight = false
+
+    task.spawn(function()
+        fireproximityprompt(prompt)
+    end)
+end)
+
+--// MAIN
+button.MouseButton1Click:Connect(function()
+
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    -- Equip first tool from backpack
+    local backpack = player:WaitForChild("Backpack")
+    local firstTool = backpack:FindFirstChildWhichIsA("Tool")
+
+    if firstTool then
+        humanoid:EquipTool(firstTool)
+
+        -- Ensure tool equipped
+        repeat
+            task.wait()
+        until character:FindFirstChild(firstTool.Name)
+    end
+
+    -- Teleport
+    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+
+    -- Walkspeed 29
+    humanoid.WalkSpeed = 29
+
+    -- Small delay
+    task.wait(0.8)
+
+    -- Teleport again
+    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+
+    -- Walkspeed 59
+    humanoid.WalkSpeed = 59
+
+    -- Spam proximity prompts nearby
+    task.spawn(function()
+        while task.wait(0.05) do
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    pcall(function()
+                        obj.HoldDuration = 0
+                        fireproximityprompt(obj)
+                    end)
+                end
+            end
+        end
+    end)
+
+end)

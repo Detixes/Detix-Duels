@@ -2,10 +2,11 @@
 --// LocalScript
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
 --// GUI
 local gui = Instance.new("ScreenGui")
@@ -22,9 +23,9 @@ frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = frame
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 10)
+frameCorner.Parent = frame
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 170, 1, 0)
@@ -38,7 +39,7 @@ title.Parent = frame
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 70, 0, 40)
 button.Position = UDim2.new(1, -80, 0.5, -20)
-button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.BackgroundColor3 = Color3.fromRGB(0,170,255)
 button.Text = "Start"
 button.TextColor3 = Color3.new(1,1,1)
 button.TextScaled = true
@@ -46,66 +47,97 @@ button.Font = Enum.Font.GothamBold
 button.Parent = frame
 
 local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.CornerRadius = UDim.new(0,8)
 buttonCorner.Parent = button
 
---// INSTANT PROXIMITY PROMPTS
+--// Instant prompts
 ProximityPromptService.PromptShown:Connect(function(prompt)
     prompt.HoldDuration = 0
     prompt.RequiresLineOfSight = false
-
-    task.spawn(function()
-        fireproximityprompt(prompt)
-    end)
 end)
 
---// MAIN
+--// Noclip
+local noclipConnection
+
+local function enableNoclip(character)
+    if noclipConnection then
+        noclipConnection:Disconnect()
+    end
+
+    noclipConnection = RunService.Stepped:Connect(function()
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end)
+end
+
+--// Main
 button.MouseButton1Click:Connect(function()
 
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid")
     local hrp = character:WaitForChild("HumanoidRootPart")
 
-    -- Equip first tool from backpack
+    -- Equip first tool
     local backpack = player:WaitForChild("Backpack")
     local firstTool = backpack:FindFirstChildWhichIsA("Tool")
 
     if firstTool then
         humanoid:EquipTool(firstTool)
 
-        -- Ensure tool equipped
+        -- Wait until equipped
         repeat
             task.wait()
         until character:FindFirstChild(firstTool.Name)
     end
 
-    -- Teleport
+    -- First teleport
     hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
 
-    -- Walkspeed 29
     humanoid.WalkSpeed = 29
 
-    -- Small delay
-    task.wait(0.8)
+    -- Find and trigger ONE nearby prompt
+    local triggered = false
+    local radius = 25
 
-    -- Teleport again
-    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") and obj.Parent then
 
-    -- Walkspeed 59
-    humanoid.WalkSpeed = 59
+            local parentPart = obj.Parent
 
-    -- Spam proximity prompts nearby
-    task.spawn(function()
-        while task.wait(0.05) do
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("ProximityPrompt") then
+            if parentPart:IsA("BasePart") then
+                local distance = (hrp.Position - parentPart.Position).Magnitude
+
+                if distance <= radius then
+                    obj.HoldDuration = 0
+                    obj.RequiresLineOfSight = false
+
                     pcall(function()
-                        obj.HoldDuration = 0
                         fireproximityprompt(obj)
                     end)
+
+                    triggered = true
+                    break
                 end
             end
         end
-    end)
+    end
+
+    -- Wait
+    task.wait(0.8)
+
+    -- Teleport back
+    hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
+
+    humanoid.WalkSpeed = 59
+
+    -- Noclip
+    enableNoclip(character)
+
+    -- Put player 10 studs above camera
+    local camPos = camera.CFrame.Position
+    hrp.CFrame = CFrame.new(camPos + Vector3.new(0, 10, 0))
 
 end)

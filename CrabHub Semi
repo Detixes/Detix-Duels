@@ -441,6 +441,12 @@ end)
 
 makeToggle("Base Walker", 155, function(state)
     _G.BaseWalk = state
+
+    if state then
+        startBaseWalk()
+    else
+        stopBaseWalk()
+    end
 end)
 
 makeToggle("Speed After Steal", 195, function(state)

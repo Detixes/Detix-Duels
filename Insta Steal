@@ -146,12 +146,12 @@ local spot2_sequence = {
 }
 
 -- [[ UI INITIALIZATION ]]
-if CoreGui:FindFirstChild("AriesHubGui") then 
-    CoreGui["AriesHubGui"]:Destroy() 
+if CoreGui:FindFirstChild("CrabHubGui") then 
+    CoreGui["CrabHubGui"]:Destroy() 
 end
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AriesHubGui"
+screenGui.Name = "CrabHubGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = CoreGui
 
@@ -177,9 +177,9 @@ uiStroke.Parent = mainFrame
 
 
 
--- [[ ZERO HUB BANNER ]]
+-- [[ CRAB HUB BANNER ]]
 local bannerFrame = Instance.new("Frame")
-bannerFrame.Name = "ZeroHubBanner"
+bannerFrame.Name = "CrabHubBanner"
 bannerFrame.Size = UDim2.new(0, 150, 0, 32)
 bannerFrame.Position = UDim2.new(0.5, -75, 0, 14)
 bannerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -196,8 +196,7 @@ bannerStroke.Thickness = 2
 bannerStroke.Color = Color3.fromRGB(255, 255, 255)
 bannerStroke.Parent = bannerFrame
 
--- Create one TextLabel per letter for individual color control
-local bannerText = "ZERO HUB"
+local bannerText = "CRAB HUB"
 local letterLabels = {}
 local totalLetters = #bannerText
 local letterWidth = 150 / totalLetters
@@ -216,7 +215,7 @@ for i = 1, totalLetters do
     table.insert(letterLabels, lbl)
 end
 
--- Animate letters white -> black one by one with smooth tween, then black -> white one by one
+-- Ui anims
 task.spawn(function()
     while true do
         -- Fade each letter to black one by one
@@ -227,7 +226,6 @@ task.spawn(function()
             task.wait(0.1)
         end
         task.wait(0.35)
-        -- Fade each letter back to white one by one
         for i = 1, totalLetters do
             if letterLabels[i] then
                 TweenService:Create(letterLabels[i], TweenInfo.new(0.18, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
@@ -245,8 +243,7 @@ local allAnimalsCache = {}
 local PromptMemoryCache = {}
 local InternalStealCache = {}
 
--- Speed after steal always active
-local SPEED_BOOST = 28
+local SPEED_BOOST = 30
 local speedConnection = nil
 
 local function applyPostStealEffects()
@@ -388,7 +385,7 @@ end)
 tpButton.MouseButton1Click:Connect(function()
     handleSteal(selectedSequence)
     
-    -- Equip Flying Carpet
+    -- Carpet equip
     task.wait(0.1)
     local playerBackpack = player:WaitForChild("Backpack")
     local flyingCarpet = playerBackpack:FindFirstChild("Flying Carpet")
@@ -521,3 +518,5 @@ end)
 
 initializeScanner()
 createVisualBaseplate(base1_pos)
+
+print("CrabHub Semi Status : Initialised")

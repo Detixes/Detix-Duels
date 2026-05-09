@@ -23,9 +23,7 @@ frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 10)
-frameCorner.Parent = frame
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 170, 1, 0)
@@ -46,11 +44,9 @@ button.TextScaled = true
 button.Font = Enum.Font.GothamBold
 button.Parent = frame
 
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0,8)
-buttonCorner.Parent = button
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
 
---// Instant prompts
+--// Instant prompts globally
 ProximityPromptService.PromptShown:Connect(function(prompt)
     prompt.HoldDuration = 0
     prompt.RequiresLineOfSight = false
@@ -73,6 +69,41 @@ local function enableNoclip(character)
     end)
 end
 
+--// Trigger EVERY prompt in radius until one succeeds
+local function triggerNearbyPrompts(hrp)
+    local radius = 25
+    local success = false
+
+    while not success do
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") and obj.Parent then
+
+                local parentPart = obj.Parent
+
+                if parentPart:IsA("BasePart") then
+                    local distance = (hrp.Position - parentPart.Position).Magnitude
+
+                    if distance <= radius then
+                        obj.HoldDuration = 0
+                        obj.RequiresLineOfSight = false
+
+                        local worked = pcall(function()
+                            fireproximityprompt(obj)
+                        end)
+
+                        if worked then
+                            success = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
+
+        task.wait(0.05)
+    end
+end
+
 --// Main
 button.MouseButton1Click:Connect(function()
 
@@ -87,43 +118,19 @@ button.MouseButton1Click:Connect(function()
     if firstTool then
         humanoid:EquipTool(firstTool)
 
-        -- Wait until equipped
+        -- Ensure equipped
         repeat
             task.wait()
         until character:FindFirstChild(firstTool.Name)
     end
 
-    -- First teleport
+    -- Teleport
     hrp.CFrame = CFrame.new(-338.11, 16.01, -5.19)
 
     humanoid.WalkSpeed = 29
 
-    -- Find and trigger ONE nearby prompt
-    local triggered = false
-    local radius = 25
-
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") and obj.Parent then
-
-            local parentPart = obj.Parent
-
-            if parentPart:IsA("BasePart") then
-                local distance = (hrp.Position - parentPart.Position).Magnitude
-
-                if distance <= radius then
-                    obj.HoldDuration = 0
-                    obj.RequiresLineOfSight = false
-
-                    pcall(function()
-                        fireproximityprompt(obj)
-                    end)
-
-                    triggered = true
-                    break
-                end
-            end
-        end
-    end
+    -- Trigger every prompt in radius
+    triggerNearbyPrompts(hrp)
 
     -- Wait
     task.wait(0.8)
@@ -133,10 +140,10 @@ button.MouseButton1Click:Connect(function()
 
     humanoid.WalkSpeed = 59
 
-    -- Noclip
+    -- Enable noclip
     enableNoclip(character)
 
-    -- Put player 10 studs above camera
+    -- Move 10 studs above camera
     local camPos = camera.CFrame.Position
     hrp.CFrame = CFrame.new(camPos + Vector3.new(0, 10, 0))
 

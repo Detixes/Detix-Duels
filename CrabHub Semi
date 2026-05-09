@@ -5,6 +5,7 @@ local UserInputService       = game:GetService("UserInputService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local CoreGui                = game:GetService("CoreGui")
 local ReplicatedStorage      = game:GetService("ReplicatedStorage")
+local Workspace 			 = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 
@@ -103,21 +104,21 @@ local function startBaseWalk()
 end
 
 local function walkToBaseAfterDelay()
-	if not _G.BaseWalk then
-		return
-	end
-
 	task.spawn(function()
 		task.wait(2)
 
-		if not _G.BaseWalk then
-			return
-		end
-
 		local character = player.Character
-		if not character then
-			return
+		if not character then return end
+
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return end
+
+		local delivery = findDeliveryHitbox()
+		if delivery then
+			humanoid:MoveTo(delivery.Position)
 		end
+	end)
+end
 
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
 		local delivery = findDeliveryHitbox()
@@ -517,7 +518,7 @@ end
 
 -- ─── Create Toggles ───────────────────────────────────────────────
 
-_G.BaseWalk = true
+_G.BaseWalk = false
 
 makeToggle("Auto Potion", 100, function(state)
 	_G.AutoPotion = state
@@ -528,14 +529,6 @@ makeToggle("Speed After Steal", 150, function(state)
 	if not state and speedConnection then
 		speedConnection:Disconnect()
 		speedConnection = nil
-	end
-end)
-
-task.spawn(function()
-	task.wait(1)
-
-	if _G.BaseWalk then
-		startBaseWalk()
 	end
 end)
 

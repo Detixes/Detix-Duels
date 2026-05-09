@@ -731,6 +731,122 @@ end
 
 -- ─── Init ──────────────────────────────────────────────────────────────────────
 
+local beam
+local playerAttachment
+local baseAttachment
+
+local function findDelivery()
+	local plots = Workspace:FindFirstChild("Plots")
+	if not plots then
+		return nil
+	end
+
+	for _, plot in pairs(plots:GetChildren()) do
+		local sign = plot:FindFirstChild("PlotSign")
+
+		if sign then
+			local yourBase = sign:FindFirstChild("YourBase")
+
+			if yourBase and yourBase.Enabled then
+				return plot:FindFirstChild("DeliveryHitbox")
+			end
+		end
+	end
+
+	return nil
+end
+
+local function createBeam()
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+
+	local delivery = findDelivery()
+	if not delivery then
+		return
+	end
+
+	if not playerAttachment or playerAttachment.Parent ~= hrp then
+		if playerAttachment then
+			playerAttachment:Destroy()
+		end
+
+		playerAttachment = Instance.new("Attachment")
+		playerAttachment.Parent = hrp
+	end
+
+	if not baseAttachment or baseAttachment.Parent ~= delivery then
+		if baseAttachment then
+			baseAttachment:Destroy()
+		end
+
+		baseAttachment = Instance.new("Attachment")
+		baseAttachment.Parent = delivery
+	end
+
+	if not beam then
+		beam = Instance.new("Beam")
+
+		beam.Attachment0 = playerAttachment
+		beam.Attachment1 = baseAttachment
+
+		beam.Width0 = 1.4
+		beam.Width1 = 1.4
+
+		beam.FaceCamera = true
+
+		beam.LightEmission = 1
+		beam.LightInfluence = 0
+
+		beam.Texture = "rbxassetid://446111271"
+		beam.TextureLength = 2
+		beam.TextureSpeed = 3
+		beam.TextureMode = Enum.TextureMode.Wrap
+
+		beam.Transparency = NumberSequence.new(0)
+
+		beam.Parent = Workspace
+	else
+		beam.Attachment0 = playerAttachment
+		beam.Attachment1 = baseAttachment
+	end
+end
+
+local hue = 0
+
+RunService.RenderStepped:Connect(function(dt)
+	hue += dt * 0.2
+
+	if hue > 1 then
+		hue = 0
+	end
+
+	if beam then
+		beam.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromHSV(hue, 1, 1)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromHSV((hue + 0.2) % 1, 1, 1)),
+			ColorSequenceKeypoint.new(1, Color3.fromHSV((hue + 0.4) % 1, 1, 1))
+		})
+	end
+end)
+
+task.spawn(function()
+	while true do
+		createBeam()
+		task.wait(2)
+	end
+end)
+
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+	createBeam()
+end)
 task.spawn(function()
     task.wait(1)
     ResetToWork()

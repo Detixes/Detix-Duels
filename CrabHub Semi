@@ -575,6 +575,39 @@ local function makeBigButton(labelText, yPos, onClick)
     return btn
 end
 
+local function walkToBaseAfterDelay()
+	task.spawn(function()
+		task.wait(2)
+
+		local character = player.Character
+		if not character then return end
+
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return end
+
+		local function findDelivery()
+			local plots = workspace:FindFirstChild("Plots")
+			if not plots then return nil end
+
+			for _, plot in pairs(plots:GetChildren()) do
+				local sign = plot:FindFirstChild("PlotSign")
+				if sign then
+					local yourBase = sign:FindFirstChild("YourBase")
+					if yourBase and yourBase.Enabled then
+						return plot:FindFirstChild("DeliveryHitbox")
+					end
+				end
+			end
+			return nil
+		end
+
+		local delivery = findDelivery()
+		if delivery then
+			humanoid:MoveTo(delivery.Position)
+		end
+	end)
+end
+
 -- ─── Auto TP Left (auto steal spot1) ───────────────────────────────────────────
 
 makeBigButton("Auto tp Left", 205, function()
@@ -585,7 +618,7 @@ makeBigButton("Auto tp Left", 205, function()
     local prompt = findPrompt(animal)
     if not prompt then return end
     buildStealCallbacks(prompt)
-    executeInternalStealAsync(prompt, animal)
+	executeInternalStealAsync(prompt, animal)
 	walkToBaseAfterDelay()
 end)
 
@@ -635,7 +668,7 @@ makeBigButton("Auto tp Right", 253, function()
         IsStealing = false
         StealProgress = 0
         CurrentStealTarget = nil
-        CONFIG.ANTI_STEAL_ACTIVE = false
+		CONFIG.ANTI_STEAL_ACTIVE = false
 		walkToBaseAfterDelay()
     end)
 end)

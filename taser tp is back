@@ -17,8 +17,8 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 360, 0, 190)
-main.Position = UDim2.new(0.5, -180, 0.5, -95)
+main.Size = UDim2.new(0, 380, 0, 260)
+main.Position = UDim2.new(0.5, -190, 0.5, -130)
 main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
 main.BorderSizePixel = 0
 main.Active = true
@@ -33,62 +33,93 @@ stroke.Thickness = 2
 stroke.Color = Color3.fromRGB(0, 170, 255)
 stroke.Parent = main
 
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(0,170,255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(0,90,255))
-}
-gradient.Rotation = 45
-gradient.Parent = stroke
+--====================================================
+-- HEADER
+--====================================================
 
--- Shadow
-local shadow = Instance.new("ImageLabel")
-shadow.BackgroundTransparency = 1
-shadow.AnchorPoint = Vector2.new(0.5,0.5)
-shadow.Position = UDim2.new(0.5,0,0.5,6)
-shadow.Size = UDim2.new(1,50,1,50)
-shadow.Image = "rbxassetid://1316045217"
-shadow.ImageTransparency = 0.6
-shadow.ScaleType = Enum.ScaleType.Slice
-shadow.SliceCenter = Rect.new(10,10,118,118)
-shadow.ZIndex = 0
-shadow.Parent = main
-
-main.ZIndex = 1
-
--- Header
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 50)
+header.Size = UDim2.new(1,0,0,50)
 header.BackgroundTransparency = 1
 header.Parent = main
 
 local title = Instance.new("TextLabel")
 title.BackgroundTransparency = 1
-title.Size = UDim2.new(1, -20, 1, 0)
-title.Position = UDim2.new(0, 15, 0, 0)
+title.Position = UDim2.new(0,15,0,5)
+title.Size = UDim2.new(1,-20,0,30)
 title.Font = Enum.Font.GothamBold
 title.Text = "Teleport Route"
-title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextSize = 24
+title.TextColor3 = Color3.new(1,1,1)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
 subtitle.BackgroundTransparency = 1
-subtitle.Size = UDim2.new(1, -20, 0, 20)
-subtitle.Position = UDim2.new(0, 15, 0, 30)
+subtitle.Position = UDim2.new(0,15,0,30)
+subtitle.Size = UDim2.new(1,-20,0,20)
 subtitle.Font = Enum.Font.Gotham
-subtitle.Text = "Fast chained teleport sequence"
-subtitle.TextColor3 = Color3.fromRGB(170,170,170)
+subtitle.Text = "Adjust wait multiplier below"
 subtitle.TextSize = 13
+subtitle.TextColor3 = Color3.fromRGB(170,170,170)
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = header
 
--- Execute Button
+--====================================================
+-- SLIDER
+--====================================================
+
+local sliderTitle = Instance.new("TextLabel")
+sliderTitle.BackgroundTransparency = 1
+sliderTitle.Position = UDim2.new(0,20,0,75)
+sliderTitle.Size = UDim2.new(1,-40,0,25)
+sliderTitle.Font = Enum.Font.GothamMedium
+sliderTitle.Text = "Wait Multiplier: 1.0x"
+sliderTitle.TextSize = 18
+sliderTitle.TextColor3 = Color3.new(1,1,1)
+sliderTitle.TextXAlignment = Enum.TextXAlignment.Left
+sliderTitle.Parent = main
+
+local sliderBG = Instance.new("Frame")
+sliderBG.Size = UDim2.new(0.85,0,0,10)
+sliderBG.Position = UDim2.new(0.075,0,0,120)
+sliderBG.BackgroundColor3 = Color3.fromRGB(40,40,45)
+sliderBG.BorderSizePixel = 0
+sliderBG.Parent = main
+
+local sliderBGCorner = Instance.new("UICorner")
+sliderBGCorner.CornerRadius = UDim.new(1,0)
+sliderBGCorner.Parent = sliderBG
+
+local sliderFill = Instance.new("Frame")
+sliderFill.Size = UDim2.new(0.18,0,1,0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(0,170,255)
+sliderFill.BorderSizePixel = 0
+sliderFill.Parent = sliderBG
+
+local sliderFillCorner = Instance.new("UICorner")
+sliderFillCorner.CornerRadius = UDim.new(1,0)
+sliderFillCorner.Parent = sliderFill
+
+local knob = Instance.new("Frame")
+knob.Size = UDim2.new(0,20,0,20)
+knob.AnchorPoint = Vector2.new(0.5,0.5)
+knob.Position = UDim2.new(0.18,0,0.5,0)
+knob.BackgroundColor3 = Color3.new(1,1,1)
+knob.BorderSizePixel = 0
+knob.Parent = sliderBG
+
+local knobCorner = Instance.new("UICorner")
+knobCorner.CornerRadius = UDim.new(1,0)
+knobCorner.Parent = knob
+
+--====================================================
+-- EXECUTE BUTTON
+--====================================================
+
 local execute = Instance.new("TextButton")
-execute.Size = UDim2.new(0.82, 0, 0, 58)
-execute.Position = UDim2.new(0.09, 0, 0.62, 0)
-execute.BackgroundColor3 = Color3.fromRGB(0, 145, 255)
+execute.Size = UDim2.new(0.82,0,0,58)
+execute.Position = UDim2.new(0.09,0,0.72,0)
+execute.BackgroundColor3 = Color3.fromRGB(0,145,255)
 execute.Text = "EXECUTE"
 execute.Font = Enum.Font.GothamBold
 execute.TextSize = 24
@@ -96,32 +127,12 @@ execute.TextColor3 = Color3.new(1,1,1)
 execute.AutoButtonColor = false
 execute.Parent = main
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 14)
-btnCorner.Parent = execute
-
-local btnStroke = Instance.new("UIStroke")
-btnStroke.Color = Color3.fromRGB(255,255,255)
-btnStroke.Transparency = 0.85
-btnStroke.Parent = execute
-
--- Hover Animation
-execute.MouseEnter:Connect(function()
-	TweenService:Create(execute, TweenInfo.new(0.15), {
-		BackgroundColor3 = Color3.fromRGB(0,185,255),
-		Size = UDim2.new(0.84,0,0,60)
-	}):Play()
-end)
-
-execute.MouseLeave:Connect(function()
-	TweenService:Create(execute, TweenInfo.new(0.15), {
-		BackgroundColor3 = Color3.fromRGB(0,145,255),
-		Size = UDim2.new(0.82,0,0,58)
-	}):Play()
-end)
+local execCorner = Instance.new("UICorner")
+execCorner.CornerRadius = UDim.new(0,14)
+execCorner.Parent = execute
 
 --====================================================
--- DRAGGING
+-- DRAGGING WINDOW
 --====================================================
 
 local dragging = false
@@ -144,7 +155,6 @@ end)
 
 UIS.InputChanged:Connect(function(input)
 	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-
 		local delta = input.Position - dragStart
 
 		main.Position = UDim2.new(
@@ -157,12 +167,57 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 --====================================================
--- TELEPORT FUNCTION
+-- SLIDER LOGIC
+--====================================================
+
+local multiplier = 1
+local sliding = false
+
+local function updateSlider(input)
+	local percent = math.clamp(
+		(input.Position.X - sliderBG.AbsolutePosition.X) / sliderBG.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	sliderFill.Size = UDim2.new(percent,0,1,0)
+	knob.Position = UDim2.new(percent,0,0.5,0)
+
+	-- 0.1x to 5x
+	multiplier = math.floor((0.1 + (percent * 4.9)) * 10) / 10
+
+	sliderTitle.Text = "Wait Multiplier: "..multiplier.."x"
+end
+
+knob.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		sliding = true
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		sliding = false
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
+		updateSlider(input)
+	end
+end)
+
+--====================================================
+-- TELEPORT SEQUENCE
 --====================================================
 
 local running = false
 
-local function doTeleportSequence()
+local function waitScaled(time)
+	task.wait(time * multiplier)
+end
+
+execute.MouseButton1Click:Connect(function()
 
 	if running then
 		return
@@ -179,22 +234,22 @@ local function doTeleportSequence()
 	-- TP #1
 	hrp.CFrame = CFrame.new(-346.78, -6.88, 39.93)
 
-	task.wait(0.05)
+	waitScaled(0.05)
 
 	-- TP #2
 	hrp.CFrame = CFrame.new(-299.96, 13.02, 34.53)
 
-	task.wait(0.05)
+	waitScaled(0.05)
 
 	-- TP #3
 	hrp.CFrame = CFrame.new(-304.01, 13.02, 6.99)
 
-	task.wait(0.03)
+	waitScaled(0.03)
 
 	-- TP #4
 	hrp.CFrame = CFrame.new(-303.69, 29.43, 7.47)
 
-	task.wait(0.02)
+	waitScaled(0.02)
 
 	-- FINAL TP
 	hrp.CFrame = CFrame.new(-325.47, 30.72, -9.30)
@@ -203,6 +258,4 @@ local function doTeleportSequence()
 	execute.Active = true
 
 	running = false
-end
-
-execute.MouseButton1Click:Connect(doTeleportSequence)
+end)

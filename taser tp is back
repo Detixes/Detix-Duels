@@ -6,29 +6,20 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 
---// FOV EFFECT
-camera.FieldOfView = 70
+--////////////////////////////////////////////////////
+-- GUI
+--////////////////////////////////////////////////////
 
-TweenService:Create(
-	camera,
-	TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-	{
-		FieldOfView = 120
-	}
-):Play()
-
---// GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "SequenceUI"
+gui.Name = "TeleportUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 370, 0, 200)
-main.Position = UDim2.new(0.5, -185, 0.5, -100)
+main.Size = UDim2.new(0, 360, 0, 190)
+main.Position = UDim2.new(0.5, -180, 0.5, -95)
 main.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
 main.BorderSizePixel = 0
 main.Parent = gui
@@ -38,9 +29,8 @@ corner.CornerRadius = UDim.new(0, 18)
 corner.Parent = main
 
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
 stroke.Color = Color3.fromRGB(0, 170, 255)
-stroke.Transparency = 0.1
+stroke.Thickness = 2
 stroke.Parent = main
 
 local gradient = Instance.new("UIGradient")
@@ -54,9 +44,9 @@ gradient.Parent = stroke
 -- Shadow
 local shadow = Instance.new("ImageLabel")
 shadow.BackgroundTransparency = 1
-shadow.AnchorPoint = Vector2.new(0.5,0.5)
-shadow.Position = UDim2.new(0.5,0,0.5,8)
-shadow.Size = UDim2.new(1,50,1,50)
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 8)
+shadow.Size = UDim2.new(1, 50, 1, 50)
 shadow.Image = "rbxassetid://1316045217"
 shadow.ImageTransparency = 0.55
 shadow.ScaleType = Enum.ScaleType.Slice
@@ -66,7 +56,7 @@ shadow.Parent = main
 
 main.ZIndex = 1
 
--- HEADER
+-- Header
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1,0,0,55)
 header.BackgroundTransparency = 1
@@ -74,30 +64,30 @@ header.Parent = main
 
 local title = Instance.new("TextLabel")
 title.BackgroundTransparency = 1
-title.Position = UDim2.new(0,20,0,8)
+title.Position = UDim2.new(0,20,0,10)
 title.Size = UDim2.new(1,-20,0,28)
 title.Font = Enum.Font.GothamBold
-title.Text = "TELEPORT SEQUENCE"
+title.Text = "TELEPORT ROUTE"
 title.TextColor3 = Color3.fromRGB(255,255,255)
-title.TextSize = 25
+title.TextSize = 24
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
 subtitle.BackgroundTransparency = 1
-subtitle.Position = UDim2.new(0,20,0,33)
+subtitle.Position = UDim2.new(0,20,0,35)
 subtitle.Size = UDim2.new(1,-20,0,20)
 subtitle.Font = Enum.Font.Gotham
-subtitle.Text = "Clean enhanced execution panel"
-subtitle.TextColor3 = Color3.fromRGB(160,160,160)
+subtitle.Text = "Fast chained teleport sequence"
+subtitle.TextColor3 = Color3.fromRGB(170,170,170)
 subtitle.TextSize = 13
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = header
 
--- EXECUTE BUTTON
+-- Execute Button
 local execute = Instance.new("TextButton")
-execute.Size = UDim2.new(0.82,0,0,60)
-execute.Position = UDim2.new(0.09,0,0.6,0)
+execute.Size = UDim2.new(0.82,0,0,58)
+execute.Position = UDim2.new(0.09,0,0.62,0)
 execute.BackgroundColor3 = Color3.fromRGB(0,145,255)
 execute.Text = "EXECUTE"
 execute.Font = Enum.Font.GothamBold
@@ -110,27 +100,25 @@ local execCorner = Instance.new("UICorner")
 execCorner.CornerRadius = UDim.new(0,14)
 execCorner.Parent = execute
 
-local execStroke = Instance.new("UIStroke")
-execStroke.Color = Color3.fromRGB(255,255,255)
-execStroke.Transparency = 0.85
-execStroke.Parent = execute
-
--- Hover Animation
+-- Hover effect
 execute.MouseEnter:Connect(function()
-	TweenService:Create(execute,TweenInfo.new(0.15),{
+	TweenService:Create(execute, TweenInfo.new(0.15), {
 		BackgroundColor3 = Color3.fromRGB(0,185,255),
-		Size = UDim2.new(0.84,0,0,62)
+		Size = UDim2.new(0.84,0,0,60)
 	}):Play()
 end)
 
 execute.MouseLeave:Connect(function()
-	TweenService:Create(execute,TweenInfo.new(0.15),{
+	TweenService:Create(execute, TweenInfo.new(0.15), {
 		BackgroundColor3 = Color3.fromRGB(0,145,255),
-		Size = UDim2.new(0.82,0,0,60)
+		Size = UDim2.new(0.82,0,0,58)
 	}):Play()
 end)
 
---// DRAG SYSTEM
+--////////////////////////////////////////////////////
+-- DRAGGING
+--////////////////////////////////////////////////////
+
 local dragging = false
 local dragInput
 local dragStart
@@ -173,7 +161,10 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
---// MAIN SEQUENCE
+--////////////////////////////////////////////////////
+-- TELEPORT SEQUENCE
+--////////////////////////////////////////////////////
+
 execute.MouseButton1Click:Connect(function()
 
 	execute.Text = "RUNNING..."
@@ -183,7 +174,7 @@ execute.MouseButton1Click:Connect(function()
 	local humanoid = character:WaitForChild("Humanoid")
 	local hrp = character:WaitForChild("HumanoidRootPart")
 
-	-- Equip first tool
+	-- Equip first tool in backpack
 	local backpack = player:WaitForChild("Backpack")
 	local firstTool = backpack:FindFirstChildOfClass("Tool")
 
@@ -191,31 +182,28 @@ execute.MouseButton1Click:Connect(function()
 		humanoid:EquipTool(firstTool)
 	end
 
-	-- First TP
-	wait(0.1)
-	hrp.CFrame = CFrame.new(-343.51, -6.67, 24.87)
+	-- TP #1
+	hrp.CFrame = CFrame.new(-346.78, -6.88, 39.93)
 
-	-- Second TP
-	wait(0.1)
-	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+	wait(0.05)
 
-	-- Delay
-	wait(0.3)
+	-- TP #2
+	hrp.CFrame = CFrame.new(-299.96, 13.02, 34.53)
 
-	-- Ragdoll BEFORE kick
-	humanoid.PlatformStand = true
-	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+	wait(0.05)
 
-	-- Keep player at location
-	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+	-- TP #3
+	hrp.CFrame = CFrame.new(-304.01, 13.02, 6.99)
 
-	wait(0.3)
+	wait(0.03)
 
-	-- Final reposition while ragdolled
-	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+	-- TP #4
+	hrp.CFrame = CFrame.new(-303.69, 29.43, 7.47)
 
-	wait(0.3)
+	wait(0.02)
 
-	-- Kick
-	player:Kick("Sequence complete.")
+	-- FINAL TP
+	hrp.CFrame = CFrame.new(-325.47, 30.72, -9.30)
+
+	execute.Text = "COMPLETE"
 end)

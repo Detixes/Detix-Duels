@@ -1,132 +1,171 @@
 --// LocalScript
---// Put inside StarterPlayerScripts
+--// Put in StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local UIS = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
---====================================================
+--////////////////////////////////////////////////////
 -- GUI
---====================================================
+--////////////////////////////////////////////////////
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "TeleportRouteUI"
+gui.Name = "TeleportUI"
 gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0, 360, 0, 190)
 main.Position = UDim2.new(0.5, -180, 0.5, -95)
-main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+main.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
 main.BorderSizePixel = 0
-main.Active = true
 main.Parent = gui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 16)
+corner.CornerRadius = UDim.new(0, 18)
 corner.Parent = main
 
 local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
 stroke.Color = Color3.fromRGB(0, 170, 255)
+stroke.Thickness = 2
 stroke.Parent = main
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0,170,255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0,90,255))
+}
+gradient.Rotation = 45
+gradient.Parent = stroke
+
+-- Shadow
+local shadow = Instance.new("ImageLabel")
+shadow.BackgroundTransparency = 1
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 0, 0.5, 8)
+shadow.Size = UDim2.new(1, 50, 1, 50)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.55
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10,10,118,118)
+shadow.ZIndex = 0
+shadow.Parent = main
+
+main.ZIndex = 1
 
 -- Header
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 50)
+header.Size = UDim2.new(1,0,0,55)
 header.BackgroundTransparency = 1
 header.Parent = main
 
 local title = Instance.new("TextLabel")
 title.BackgroundTransparency = 1
-title.Size = UDim2.new(1, -20, 1, 0)
-title.Position = UDim2.new(0, 15, 0, 0)
+title.Position = UDim2.new(0,20,0,10)
+title.Size = UDim2.new(1,-20,0,28)
 title.Font = Enum.Font.GothamBold
-title.Text = "Teleport Route"
+title.Text = "TELEPORT ROUTE"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextSize = 24
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
--- Button
+local subtitle = Instance.new("TextLabel")
+subtitle.BackgroundTransparency = 1
+subtitle.Position = UDim2.new(0,20,0,35)
+subtitle.Size = UDim2.new(1,-20,0,20)
+subtitle.Font = Enum.Font.Gotham
+subtitle.Text = "Fast chained teleport sequence"
+subtitle.TextColor3 = Color3.fromRGB(170,170,170)
+subtitle.TextSize = 13
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.Parent = header
+
+-- Execute Button
 local execute = Instance.new("TextButton")
-execute.Size = UDim2.new(0.82, 0, 0, 58)
-execute.Position = UDim2.new(0.09, 0, 0.6, 0)
-execute.BackgroundColor3 = Color3.fromRGB(0, 145, 255)
+execute.Size = UDim2.new(0.82,0,0,58)
+execute.Position = UDim2.new(0.09,0,0.62,0)
+execute.BackgroundColor3 = Color3.fromRGB(0,145,255)
 execute.Text = "EXECUTE"
 execute.Font = Enum.Font.GothamBold
 execute.TextSize = 24
-execute.TextColor3 = Color3.new(1,1,1)
+execute.TextColor3 = Color3.fromRGB(255,255,255)
 execute.AutoButtonColor = false
 execute.Parent = main
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 14)
-btnCorner.Parent = execute
+local execCorner = Instance.new("UICorner")
+execCorner.CornerRadius = UDim.new(0,14)
+execCorner.Parent = execute
 
--- Hover
+-- Hover effect
 execute.MouseEnter:Connect(function()
 	TweenService:Create(execute, TweenInfo.new(0.15), {
-		BackgroundColor3 = Color3.fromRGB(0,185,255)
+		BackgroundColor3 = Color3.fromRGB(0,185,255),
+		Size = UDim2.new(0.84,0,0,60)
 	}):Play()
 end)
 
 execute.MouseLeave:Connect(function()
 	TweenService:Create(execute, TweenInfo.new(0.15), {
-		BackgroundColor3 = Color3.fromRGB(0,145,255)
+		BackgroundColor3 = Color3.fromRGB(0,145,255),
+		Size = UDim2.new(0.82,0,0,58)
 	}):Play()
 end)
 
---====================================================
+--////////////////////////////////////////////////////
 -- DRAGGING
---====================================================
+--////////////////////////////////////////////////////
 
 local dragging = false
+local dragInput
 local dragStart
 local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+
+	main.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
 
 header.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
 		startPos = main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
 	end
 end)
 
-header.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = false
+header.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
 	end
 end)
 
-UIS.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-
-		main.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
 	end
 end)
 
---====================================================
+--////////////////////////////////////////////////////
 -- TELEPORT SEQUENCE
---====================================================
-
-local running = false
+--////////////////////////////////////////////////////
 
 execute.MouseButton1Click:Connect(function()
-
-	if running then
-		return
-	end
-
-	running = true
 
 	execute.Text = "RUNNING..."
 	execute.Active = false
@@ -135,7 +174,7 @@ execute.MouseButton1Click:Connect(function()
 	local humanoid = character:WaitForChild("Humanoid")
 	local hrp = character:WaitForChild("HumanoidRootPart")
 
-	-- Equip first tool
+	-- Equip first tool in backpack
 	local backpack = player:WaitForChild("Backpack")
 	local firstTool = backpack:FindFirstChildOfClass("Tool")
 
@@ -146,22 +185,22 @@ execute.MouseButton1Click:Connect(function()
 	-- TP #1
 	hrp.CFrame = CFrame.new(-346.78, -6.88, 39.93)
 
-	task.wait(0.05)
+	wait(0.05)
 
 	-- TP #2
 	hrp.CFrame = CFrame.new(-299.96, 13.02, 34.53)
 
-	task.wait(0.05)
+	wait(0.05)
 
 	-- TP #3
 	hrp.CFrame = CFrame.new(-304.01, 13.02, 6.99)
 
-	task.wait(0.03)
+	wait(0.03)
 
 	-- TP #4
 	hrp.CFrame = CFrame.new(-303.69, 29.43, 7.47)
 
-	task.wait(0.02)
+	wait(0.02)
 
 	-- FINAL TP
 	hrp.CFrame = CFrame.new(-325.47, 30.72, -9.30)

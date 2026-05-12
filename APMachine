@@ -1,19 +1,22 @@
--- SERVICES
-local player = game.Players.LocalPlayer
+--// ADMIN PANEL SPAWNER
+--// Full LocalScript
+--// Put in StarterPlayerScripts
+
+--// SERVICES
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+--// TRADE UI
 local tradeUI = playerGui:WaitForChild("TradeLiveTrade"):WaitForChild("TradeLiveTrade")
 local yourFrame = tradeUI:WaitForChild("Your")
 local scrollingFrame = yourFrame:WaitForChild("ScrollingFrame")
 
 local template = scrollingFrame:WaitForChild("Template")
 local spacer = template:WaitForChild("Spacer")
-
-template.Visible = true
-
-local cash = spacer:WaitForChild("Cash")
-local title = spacer:WaitForChild("Title")
-local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
 local confirmationUI = playerGui:WaitForChild("Confirmation")
 local warningTemplate = confirmationUI:WaitForChild("WarningTemplate")
@@ -27,99 +30,166 @@ local noButton = warningTemplate:WaitForChild("No")
 local notificationRoot = playerGui:WaitForChild("Notification")
 local notificationUI = notificationRoot:WaitForChild("Notification")
 
-local notifTemplate = notificationUI:FindFirstChild("Template")
-if not notifTemplate then
-	notifTemplate = notificationUI:WaitForChild("Template", 5)
-end
+local notifTemplate = notificationUI:WaitForChild("Template")
 
--- COLORS
-local defaultColor = Color3.fromRGB(35, 45, 50)
-local clickedColor = Color3.fromRGB(15, 50, 15)
-local holdColor = Color3.fromRGB(81, 103, 81)
-local strokeClickedColor = Color3.fromRGB(15, 255, 15)
+--====================================================
+-- UI CREATION
+--====================================================
 
-cash.Text = "9,999"
-title.Text = "[🎁] Admin Panel"
+local gui = Instance.new("ScreenGui")
+gui.Name = "SpawnerUI"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
 
-description.Text =
-	"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+local main = Instance.new("Frame")
+main.Parent = gui
+main.Size = UDim2.new(0, 240, 0, 180)
+main.Position = UDim2.new(0.5, -120, 0.5, -90)
+main.BackgroundColor3 = Color3.fromRGB(95, 40, 85)
+main.BorderSizePixel = 0
 
--- IMAGE
-if not spacer:FindFirstChild("CustomImage") then
-	local image = Instance.new("ImageLabel")
-	image.Name = "CustomImage"
-	image.Parent = spacer
-	image.BackgroundTransparency = 1
-	image.Image = "rbxassetid://139291316302932"
-	image.Size = UDim2.new(0.5, 0, 0.5, 0)
-	image.Position = UDim2.new(0.25, 0, 0.25, 0)
-end
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = main
 
-local existingTemplateImage = template:FindFirstChild("CustomImage")
-if existingTemplateImage then
-	existingTemplateImage:Destroy()
-end
+local stroke = Instance.new("UIStroke")
+stroke.Parent = main
+stroke.Color = Color3.fromRGB(0, 0, 120)
+stroke.Thickness = 2
 
--- FORCE ONLY TEMPLATE VISIBLE
-local function enforceVisibility()
+local glow = Instance.new("UIGradient")
+glow.Parent = main
+glow.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 60, 140)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 20, 80))
+}
+
+local title = Instance.new("TextLabel")
+title.Parent = main
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "Spawner"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextScaled = true
+
+local createButton = Instance.new("TextButton")
+createButton.Parent = main
+createButton.Size = UDim2.new(0.8, 0, 0, 40)
+createButton.Position = UDim2.new(0.1, 0, 0.3, 0)
+createButton.Text = "Create Admin Panel"
+createButton.Font = Enum.Font.GothamBold
+createButton.TextScaled = true
+createButton.BackgroundColor3 = Color3.fromRGB(40, 0, 60)
+createButton.TextColor3 = Color3.fromRGB(255,255,255)
+
+local createCorner = Instance.new("UICorner")
+createCorner.Parent = createButton
+
+local createStroke = Instance.new("UIStroke")
+createStroke.Parent = createButton
+createStroke.Color = Color3.fromRGB(0, 120, 255)
+
+local deleteButton = Instance.new("TextButton")
+deleteButton.Parent = main
+deleteButton.Size = UDim2.new(0.8, 0, 0, 40)
+deleteButton.Position = UDim2.new(0.1, 0, 0.58, 0)
+deleteButton.Text = "Delete Admin Panels"
+deleteButton.Font = Enum.Font.GothamBold
+deleteButton.TextScaled = true
+deleteButton.BackgroundColor3 = Color3.fromRGB(70, 0, 30)
+deleteButton.TextColor3 = Color3.fromRGB(255,255,255)
+
+local deleteCorner = Instance.new("UICorner")
+deleteCorner.Parent = deleteButton
+
+local deleteStroke = Instance.new("UIStroke")
+deleteStroke.Parent = deleteButton
+deleteStroke.Color = Color3.fromRGB(255, 0, 100)
+
+local countLabel = Instance.new("TextLabel")
+countLabel.Parent = main
+countLabel.Size = UDim2.new(1, 0, 0, 25)
+countLabel.Position = UDim2.new(0, 0, 0.85, 0)
+countLabel.BackgroundTransparency = 1
+countLabel.Text = "Admin Panels: 0"
+countLabel.Font = Enum.Font.GothamBold
+countLabel.TextScaled = true
+countLabel.TextColor3 = Color3.fromRGB(255,255,255)
+
+--====================================================
+-- DRAGGING
+--====================================================
+
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+main.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+main.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+
+		main.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+--====================================================
+-- HIDE SELECTIONS
+--====================================================
+
+local function hideSelections()
 	for _, v in ipairs(scrollingFrame:GetChildren()) do
-		if v ~= template and v:IsA("GuiObject") then
-			v.Visible = false
-
-			v:GetPropertyChangedSignal("Visible"):Connect(function()
-				if v.Visible then
-					v.Visible = false
-				end
-			end)
+		if string.find(v.Name, "Selection") then
+			if v:IsA("GuiObject") then
+				v.Visible = false
+			end
 		end
 	end
 end
 
-enforceVisibility()
-
-scrollingFrame.ChildAdded:Connect(function()
-	task.wait()
-	enforceVisibility()
-end)
-
 task.spawn(function()
 	while true do
-		enforceVisibility()
+		hideSelections()
 		task.wait(0.05)
 	end
 end)
 
--- STATE
-spacer.BackgroundColor3 = defaultColor
-if stroke then
-	stroke.Color = Color3.fromRGB(0, 0, 0)
-end
+--====================================================
+-- NOTIFICATIONS
+--====================================================
 
-local clicked = false
-local holding = false
+local function notify(text, color)
+	local clone = notifTemplate:Clone()
+	clone.Parent = notificationUI
+	clone.Visible = true
 
--- NOTIFICATION FUNCTION
-local function showNotification(text, color)
-	local templateClone = notifTemplate:Clone()
-	templateClone.Parent = notificationUI
-	templateClone.Visible = true
-
-	local txt = nil
-
-	if templateClone:IsA("TextLabel") then
-		txt = templateClone
-	else
-		txt = templateClone:FindFirstChild("Text", true)
-
-		if not txt then
-			for _, v in ipairs(templateClone:GetDescendants()) do
-				if v:IsA("TextLabel") then
-					txt = v
-					break
-				end
-			end
-		end
-	end
+	local txt = clone:FindFirstChild("Text", true)
 
 	if txt then
 		txt.Text = text
@@ -127,204 +197,193 @@ local function showNotification(text, color)
 	end
 
 	task.delay(5, function()
-		if templateClone then
-			templateClone:Destroy()
+		if clone then
+			clone:Destroy()
 		end
 	end)
 end
 
--- SOUNDS
-local yesSound = Instance.new("Sound")
-yesSound.SoundId = "rbxassetid://83245966620103"
-yesSound.Volume = 0.5
-yesSound.Parent = warningTemplate
+--====================================================
+-- PANEL COUNT
+--====================================================
 
-local clickSound = Instance.new("Sound")
-clickSound.SoundId = "rbxassetid://75311202481026"
-clickSound.Volume = 1
-clickSound.Parent = spacer
+local adminPanels = {}
 
-local failSound = Instance.new("Sound")
-failSound.SoundId = "rbxassetid://126210834885859"
-failSound.Volume = 0.5
-failSound.Parent = warningTemplate
-
--- ACCEPT CHECK
-local function resetToDefault()
-	clicked = false
-	holding = false
-	spacer.BackgroundColor3 = defaultColor
-
-	if stroke then
-		stroke.Color = Color3.fromRGB(0, 0, 0)
-	end
+local function updateCount()
+	countLabel.Text = "Admin Panels: "..tostring(#adminPanels)
 end
 
-local function isAccepted()
-	local other = tradeUI:FindFirstChild("Other")
-	if not other then
-		return false
+--====================================================
+-- TEMPLATE FUNCTIONALITY
+--====================================================
+
+local function setupPanel(panel)
+	local panelSpacer = panel:WaitForChild("Spacer")
+
+	local cash = panelSpacer:WaitForChild("Cash")
+	local titleText = panelSpacer:WaitForChild("Title")
+	local panelStroke = panelSpacer:FindFirstChildOfClass("UIStroke")
+
+	cash.Text = "9,999"
+	titleText.Text = "[🎁] Admin Panel"
+
+	description.Text =
+	"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
+
+	if not panelSpacer:FindFirstChild("CustomImage") then
+		local image = Instance.new("ImageLabel")
+		image.Name = "CustomImage"
+		image.Parent = panelSpacer
+		image.BackgroundTransparency = 1
+		image.Image = "rbxassetid://139291316302932"
+		image.Size = UDim2.new(0.5, 0, 0.5, 0)
+		image.Position = UDim2.new(0.25, 0, 0.25, 0)
 	end
 
-	local readyButton = other:FindFirstChild("ReadyButton")
-	if not readyButton then
-		return false
-	end
+	local defaultColor = Color3.fromRGB(35,45,50)
+	local clickedColor = Color3.fromRGB(15,50,15)
+	local holdColor = Color3.fromRGB(81,103,81)
+	local strokeClickedColor = Color3.fromRGB(15,255,15)
 
-	local txt = readyButton:FindFirstChild("Txt")
-	if not txt or not txt:IsA("TextLabel") then
-		return false
-	end
+	panelSpacer.BackgroundColor3 = defaultColor
 
-	return txt.Text == "ACCEPT"
-end
+	local clicked = false
+	local holding = false
 
-task.spawn(function()
-	local lastAccepted = false
+	panelSpacer.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			holding = true
 
-	while true do
-		local accepted = isAccepted()
-
-		if accepted and not lastAccepted then
-			resetToDefault()
-		elseif accepted then
-			resetToDefault()
+			if clicked then
+				panelSpacer.BackgroundColor3 = holdColor
+			end
 		end
+	end)
 
-		lastAccepted = accepted
-		task.wait(0.05)
-	end
-end)
+	panelSpacer.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if not holding then
+				return
+			end
 
-local function connectAcceptedWatcher()
-	local other = tradeUI:WaitForChild("Other")
-	local readyButton = other:WaitForChild("ReadyButton")
-	local txt = readyButton:WaitForChild("Txt")
+			holding = false
 
-	txt:GetPropertyChangedSignal("Text"):Connect(function()
-		if txt.Text == "ACCEPT" then
-			resetToDefault()
+			if clicked then
+				clicked = false
+				panelSpacer.BackgroundColor3 = defaultColor
+
+				if panelStroke then
+					panelStroke.Color = Color3.fromRGB(0,0,0)
+				end
+
+				notify(
+					"Failed to add 'Admin Panel' to trade!",
+					Color3.fromRGB(255,0,0)
+				)
+
+				return
+			end
+
+			confirmationUI.Enabled = true
+			warningTemplate.Visible = true
+
+			local yesConn
+			local noConn
+
+			yesConn = yesButton.MouseButton1Click:Connect(function()
+				yesConn:Disconnect()
+				noConn:Disconnect()
+
+				warningTemplate.Visible = false
+				confirmationUI.Enabled = false
+
+				clicked = true
+				panelSpacer.BackgroundColor3 = clickedColor
+
+				if panelStroke then
+					panelStroke.Color = strokeClickedColor
+				end
+
+				notify(
+					"Successfully added 'Admin Panel' to trade!",
+					Color3.fromRGB(0,255,0)
+				)
+			end)
+
+			noConn = noButton.MouseButton1Click:Connect(function()
+				yesConn:Disconnect()
+				noConn:Disconnect()
+
+				warningTemplate.Visible = false
+				confirmationUI.Enabled = false
+
+				notify(
+					"Failed to add 'Admin Panel' to trade!",
+					Color3.fromRGB(255,0,0)
+				)
+			end)
 		end
 	end)
 end
 
-task.spawn(connectAcceptedWatcher)
+--====================================================
+-- CREATE PANEL
+--====================================================
 
--- INPUT HANDLING
-spacer.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		holding = true
+createButton.MouseButton1Click:Connect(function()
+	local clone = template:Clone()
+	clone.Name = "AdminPanel_"..tostring(#adminPanels + 1)
+	clone.Visible = true
+	clone.Parent = scrollingFrame
 
-		if clicked then
-			spacer.BackgroundColor3 = holdColor
-		end
-	end
-end)
+	setupPanel(clone)
 
-spacer.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		if not holding then
-			return
-		end
+	table.insert(adminPanels, clone)
 
-		holding = false
+	updateCount()
 
-		if clickSound then
-			clickSound:Play()
-		end
-
-		-- If already selected, remove it instead of showing warning
-		if clicked then
-			clicked = false
-			spacer.BackgroundColor3 = defaultColor
-
-			if stroke then
-				stroke.Color = Color3.fromRGB(0, 0, 0)
-			end
-
-			if failSound then
-				failSound:Play()
-			end
-
-			showNotification(
-				"Failed to add 'Admin Panel' to trade!",
-				Color3.fromRGB(255, 0, 0)
-			)
-
-			return
-		end
-
-		-- Default state shows warning
-		confirmationUI.Enabled = true
-		warningTemplate.Visible = true
-	end
-end)
-
--- YES BUTTON
-yesButton.MouseButton1Click:Connect(function()
-	warningTemplate.Visible = false
-	confirmationUI.Enabled = false
-
-	if yesSound then
-		yesSound:Play()
-	end
-
-	clicked = true
-	spacer.BackgroundColor3 = clickedColor
-
-	if stroke then
-		stroke.Color = strokeClickedColor
-	end
-
-	showNotification(
-		"Successfully added 'Admin Panel' to trade!",
-		Color3.fromRGB(0, 255, 0)
+	notify(
+		"Spawned Admin Panel!",
+		Color3.fromRGB(0,255,255)
 	)
 end)
 
--- NO BUTTON
-noButton.MouseButton1Click:Connect(function()
-	warningTemplate.Visible = false
-	confirmationUI.Enabled = false
+--====================================================
+-- DELETE PANELS
+--====================================================
 
-	if failSound then
-		failSound:Play()
-	end
-
-	local failClone = notifTemplate and notifTemplate:Clone()
-
-	if not failClone then
-		warn("Template missing for fail notification")
-		return
-	end
-
-	failClone.Name = "Fail"
-	failClone.Parent = notificationUI
-	failClone.Visible = true
-
-	local txt = nil
-
-	if failClone:IsA("TextLabel") then
-		txt = failClone
-	else
-		txt = failClone:FindFirstChild("Text", true)
-	end
-
-	if txt then
-		txt.Text = "Failed to add 'Admin Panel' to trade!"
-		txt.TextColor3 = Color3.fromRGB(255, 0, 0)
-	end
-
-	task.delay(5, function()
-		if failClone then
-			failClone:Destroy()
+deleteButton.MouseButton1Click:Connect(function()
+	for _, v in ipairs(adminPanels) do
+		if v then
+			v:Destroy()
 		end
-	end)
+	end
+
+	adminPanels = {}
+
+	updateCount()
+
+	notify(
+		"Deleted all Admin Panels!",
+		Color3.fromRGB(255,80,80)
+	)
 end)
 
--- RESET WHEN TRADE UI CLOSES
+--====================================================
+-- RESET ON TRADE CLOSE
+--====================================================
+
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if not tradeUI.Visible then
-		resetToDefault()
+		for _, v in ipairs(adminPanels) do
+			if v then
+				v:Destroy()
+			end
+		end
+
+		adminPanels = {}
+		updateCount()
 	end
 end)
+
+updateCount()

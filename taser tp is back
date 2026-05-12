@@ -1,0 +1,220 @@
+--// LocalScript
+--// Put in StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+--// FOV Animation
+camera.FieldOfView = 70
+
+TweenService:Create(
+	camera,
+	TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	{
+		FieldOfView = 120
+	}
+):Play()
+
+--// GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "SequenceUI"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 360, 0, 190)
+main.Position = UDim2.new(0.5, -180, 0.5, -95)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+main.BorderSizePixel = 0
+main.Parent = gui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 18)
+mainCorner.Parent = main
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(0, 170, 255)
+stroke.Thickness = 2
+stroke.Transparency = 0.15
+stroke.Parent = main
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 85, 255))
+}
+gradient.Rotation = 45
+gradient.Parent = stroke
+
+-- Shadow
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.BackgroundTransparency = 1
+shadow.Position = UDim2.new(0.5, 0, 0.5, 6)
+shadow.Size = UDim2.new(1, 40, 1, 40)
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageTransparency = 0.6
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10,10,118,118)
+shadow.ZIndex = 0
+shadow.Parent = main
+
+main.ZIndex = 1
+
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundTransparency = 1
+header.Parent = main
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 1, 0)
+title.Position = UDim2.new(0, 20, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "TELEPORT SEQUENCE"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Parent = header
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, -20, 0, 25)
+subtitle.Position = UDim2.new(0, 20, 0, 35)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Enhanced execution interface"
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 14
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.TextColor3 = Color3.fromRGB(170,170,170)
+subtitle.Parent = header
+
+-- Execute Button
+local execute = Instance.new("TextButton")
+execute.Size = UDim2.new(0.82, 0, 0, 58)
+execute.Position = UDim2.new(0.09, 0, 0.6, 0)
+execute.BackgroundColor3 = Color3.fromRGB(0, 145, 255)
+execute.Text = "EXECUTE"
+execute.Font = Enum.Font.GothamBold
+execute.TextSize = 24
+execute.TextColor3 = Color3.fromRGB(255,255,255)
+execute.AutoButtonColor = false
+execute.Parent = main
+
+local execCorner = Instance.new("UICorner")
+execCorner.CornerRadius = UDim.new(0, 14)
+execCorner.Parent = execute
+
+local execStroke = Instance.new("UIStroke")
+execStroke.Color = Color3.fromRGB(255,255,255)
+execStroke.Transparency = 0.85
+execStroke.Parent = execute
+
+-- Button animations
+execute.MouseEnter:Connect(function()
+	TweenService:Create(execute, TweenInfo.new(0.15), {
+		BackgroundColor3 = Color3.fromRGB(0, 180, 255),
+		Size = UDim2.new(0.84, 0, 0, 60)
+	}):Play()
+end)
+
+execute.MouseLeave:Connect(function()
+	TweenService:Create(execute, TweenInfo.new(0.15), {
+		BackgroundColor3 = Color3.fromRGB(0, 145, 255),
+		Size = UDim2.new(0.82, 0, 0, 58)
+	}):Play()
+end)
+
+--// Draggable GUI
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	main.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+header.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+header.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+--// Main sequence
+execute.MouseButton1Click:Connect(function()
+
+	execute.Text = "RUNNING..."
+	execute.Active = false
+
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- Equip first tool
+	local backpack = player:WaitForChild("Backpack")
+	local firstTool = backpack:FindFirstChildOfClass("Tool")
+
+	if firstTool then
+		humanoid:EquipTool(firstTool)
+	end
+
+	-- First TP (0.1)
+	wait(0.1)
+	hrp.CFrame = CFrame.new(-343.51, -6.67, 24.87)
+
+	-- Second TP (0.1)
+	wait(0.1)
+	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+
+	-- Rest are 0.3
+	wait(0.3)
+
+	-- Ragdoll
+	humanoid.PlatformStand = true
+
+	-- TP again
+	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+
+	wait(0.3)
+
+	-- Final TP
+	hrp.CFrame = CFrame.new(-337.32, -4.98, 22.05)
+
+	wait(0.3)
+
+	-- Kick
+	player:Kick("Sequence complete.")
+end)

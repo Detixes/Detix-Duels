@@ -43,6 +43,42 @@ local strokeClickedColor = Color3.fromRGB(15,255,15)
 local adminPanels = {}
 local pendingPanel = nil
 
+-- CURRENT PRESET
+local currentPreset = "Admin Preset"
+
+-- PRESETS
+local presets = {
+	["Admin Preset"] = {
+		Image = "rbxassetid://139291316302932",
+		Cash = "9,999",
+		Title = "[🎁] Admin Panel"
+	},
+
+	["VIP Preset"] = {
+		Image = "rbxassetid://89326624889199",
+		Cash = "499",
+		Title = "[🎁] VIP"
+	},
+
+	["Hammer Preset"] = {
+		Image = "rbxassetid://113735454516185",
+		Cash = "1,499",
+		Title = "[🎁] Ban Hammer"
+	},
+
+	["Laser Preset"] = {
+		Image = "rbxassetid://127461267233201",
+		Cash = "749",
+		Title = "[🎁] Laser Gun"
+	},
+
+	["Money Preset"] = {
+		Image = "rbxassetid://93863319650684",
+		Cash = "299",
+		Title = "[🎁] 2x Money"
+	}
+}
+
 -- SOUNDS
 local yesSound = Instance.new("Sound")
 yesSound.SoundId = "rbxassetid://83245966620103"
@@ -120,14 +156,25 @@ local function resetPanels()
 			local spacer = panel:FindFirstChild("Spacer")
 
 			if spacer then
-				spacer.BackgroundColor3 = defaultColor
+				if panel:GetAttribute("Clicked") then
+					spacer.BackgroundColor3 = clickedColor
 
-				local stroke = spacer:FindFirstChildOfClass("UIStroke")
-				if stroke then
-					stroke.Color = Color3.fromRGB(0,0,0)
+					local stroke = spacer:FindFirstChildOfClass("UIStroke")
+					if stroke then
+						stroke.Color = strokeClickedColor
+					end
+
+					panel.Visible = true
+				else
+					spacer.BackgroundColor3 = defaultColor
+
+					local stroke = spacer:FindFirstChildOfClass("UIStroke")
+					if stroke then
+						stroke.Color = Color3.fromRGB(0,0,0)
+					end
+
+					panel.Visible = false
 				end
-
-				panel:SetAttribute("Clicked",false)
 			end
 		end
 	end
@@ -172,8 +219,10 @@ local function createAdminPanel()
 
 	local stroke = spacer:FindFirstChildOfClass("UIStroke")
 
-	cash.Text = "9,999"
-	title.Text = "[🎁] Admin Panel"
+	local preset = presets[currentPreset]
+
+	cash.Text = preset.Cash
+	title.Text = preset.Title
 
 	spacer.BackgroundColor3 = defaultColor
 
@@ -191,10 +240,11 @@ local function createAdminPanel()
 		img.Name = "CustomImage"
 		img.Parent = spacer
 		img.BackgroundTransparency = 1
-		img.Image = "rbxassetid://139291316302932"
 		img.Size = UDim2.new(0.5,0,0.5,0)
 		img.Position = UDim2.new(0.25,0,0.25,0)
 	end
+
+	img.Image = preset.Image
 
 	-- INPUTS
 	local holding = false
@@ -231,7 +281,7 @@ local function createAdminPanel()
 				failSound:Play()
 
 				showNotification(
-					"Failed to add 'Admin Panel' to trade!",
+					"Failed to add '"..preset.Title.."' to trade!",
 					Color3.fromRGB(255,0,0)
 				)
 
@@ -283,7 +333,7 @@ yesButton.MouseButton1Click:Connect(function()
 	end
 
 	showNotification(
-		"Successfully added 'Admin Panel' to trade!",
+		"Successfully added item to trade!",
 		Color3.fromRGB(0,255,0)
 	)
 end)
@@ -296,7 +346,7 @@ noButton.MouseButton1Click:Connect(function()
 	failSound:Play()
 
 	showNotification(
-		"Failed to add 'Admin Panel' to trade!",
+		"Failed to add item to trade!",
 		Color3.fromRGB(255,0,0)
 	)
 end)
@@ -312,7 +362,7 @@ gui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Parent = gui
-frame.Size = UDim2.new(0,260,0,110)
+frame.Size = UDim2.new(0,260,0,160)
 frame.Position = UDim2.new(0.5,-130,0.5,-55)
 frame.BackgroundColor3 = Color3.fromRGB(80,25,60)
 frame.BorderSizePixel = 0
@@ -342,11 +392,72 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 22
 title.TextColor3 = Color3.fromRGB(255,255,255)
 
+-- DROPDOWN
+local dropdown = Instance.new("TextButton")
+dropdown.Parent = frame
+dropdown.Size = UDim2.new(0,230,0,30)
+dropdown.Position = UDim2.new(0,15,0,35)
+dropdown.Text = currentPreset
+dropdown.Font = Enum.Font.GothamBold
+dropdown.TextSize = 16
+dropdown.TextColor3 = Color3.fromRGB(255,255,255)
+dropdown.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
+local dropCorner = Instance.new("UICorner")
+dropCorner.Parent = dropdown
+
+local dropdownOpen = false
+local dropdownButtons = {}
+
+local presetNames = {
+	"Admin Preset",
+	"VIP Preset",
+	"Hammer Preset",
+	"Money Preset",
+	"Laser Preset"
+}
+
+for i,presetName in ipairs(presetNames) do
+	local option = Instance.new("TextButton")
+	option.Parent = frame
+	option.Size = UDim2.new(0,230,0,25)
+	option.Position = UDim2.new(0,15,0,65 + ((i-1)*27))
+	option.Text = presetName
+	option.Font = Enum.Font.GothamBold
+	option.TextSize = 14
+	option.TextColor3 = Color3.fromRGB(255,255,255)
+	option.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	option.Visible = false
+
+	local optionCorner = Instance.new("UICorner")
+	optionCorner.Parent = option
+
+	option.MouseButton1Click:Connect(function()
+		currentPreset = presetName
+		dropdown.Text = presetName
+		dropdownOpen = false
+
+		for _,b in ipairs(dropdownButtons) do
+			b.Visible = false
+		end
+	end)
+
+	table.insert(dropdownButtons,option)
+end
+
+dropdown.MouseButton1Click:Connect(function()
+	dropdownOpen = not dropdownOpen
+
+	for _,b in ipairs(dropdownButtons) do
+		b.Visible = dropdownOpen
+	end
+end)
+
 -- ADD BUTTON
 local addButton = Instance.new("TextButton")
 addButton.Parent = frame
 addButton.Size = UDim2.new(0,50,0,40)
-addButton.Position = UDim2.new(0,15,0,50)
+addButton.Position = UDim2.new(0,15,0,105)
 addButton.Text = "+"
 addButton.Font = Enum.Font.GothamBold
 addButton.TextSize = 30
@@ -360,7 +471,7 @@ addCorner.Parent = addButton
 local removeButton = Instance.new("TextButton")
 removeButton.Parent = frame
 removeButton.Size = UDim2.new(0,50,0,40)
-removeButton.Position = UDim2.new(0,75,0,50)
+removeButton.Position = UDim2.new(0,75,0,105)
 removeButton.Text = "-"
 removeButton.Font = Enum.Font.GothamBold
 removeButton.TextSize = 30
@@ -374,7 +485,7 @@ removeCorner.Parent = removeButton
 local countBox = Instance.new("TextBox")
 countBox.Parent = frame
 countBox.Size = UDim2.new(0,100,0,40)
-countBox.Position = UDim2.new(0,140,0,50)
+countBox.Position = UDim2.new(0,140,0,105)
 countBox.Text = "0"
 countBox.ClearTextOnFocus = false
 countBox.Font = Enum.Font.GothamBold

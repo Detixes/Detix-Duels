@@ -5,6 +5,7 @@
 -- SERVICES
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -42,6 +43,7 @@ local strokeClickedColor = Color3.fromRGB(15,255,15)
 -- STATE
 local adminPanels = {}
 local pendingPanel = nil
+local autoAccept = false
 
 -- CURRENT PRESET
 local currentPreset = "Admin Preset"
@@ -156,25 +158,14 @@ local function resetPanels()
 			local spacer = panel:FindFirstChild("Spacer")
 
 			if spacer then
-				if panel:GetAttribute("Clicked") then
-					spacer.BackgroundColor3 = clickedColor
+				spacer.BackgroundColor3 = defaultColor
 
-					local stroke = spacer:FindFirstChildOfClass("UIStroke")
-					if stroke then
-						stroke.Color = strokeClickedColor
-					end
-
-					panel.Visible = true
-				else
-					spacer.BackgroundColor3 = defaultColor
-
-					local stroke = spacer:FindFirstChildOfClass("UIStroke")
-					if stroke then
-						stroke.Color = Color3.fromRGB(0,0,0)
-					end
-
-					panel.Visible = false
+				local stroke = spacer:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Color = Color3.fromRGB(0,0,0)
 				end
+
+				panel:SetAttribute("Clicked",false)
 			end
 		end
 	end
@@ -352,7 +343,7 @@ noButton.MouseButton1Click:Connect(function()
 end)
 
 --========================--
--- SPAWNER UI
+-- MODERN SPAWNER UI
 --========================--
 
 local gui = Instance.new("ScreenGui")
@@ -362,146 +353,189 @@ gui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Parent = gui
-frame.Size = UDim2.new(0,260,0,160)
-frame.Position = UDim2.new(0.5,-130,0.5,-55)
-frame.BackgroundColor3 = Color3.fromRGB(80,25,60)
+frame.Size = UDim2.new(0,330,0,320)
+frame.Position = UDim2.new(0.5,-165,0.5,-160)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,35)
 frame.BorderSizePixel = 0
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0,10)
+corner.CornerRadius = UDim.new(0,14)
 corner.Parent = frame
 
 local stroke = Instance.new("UIStroke")
 stroke.Parent = frame
-stroke.Color = Color3.fromRGB(20,20,80)
+stroke.Color = Color3.fromRGB(120,80,255)
 stroke.Thickness = 2
 
-local glow = Instance.new("UIGradient")
-glow.Parent = frame
-glow.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0,Color3.fromRGB(120,40,100)),
-	ColorSequenceKeypoint.new(1,Color3.fromRGB(60,15,40))
-})
+local topBar = Instance.new("Frame")
+topBar.Parent = frame
+topBar.Size = UDim2.new(1,0,0,40)
+topBar.BackgroundColor3 = Color3.fromRGB(35,35,50)
+topBar.BorderSizePixel = 0
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0,14)
+topCorner.Parent = topBar
+
+local fix = Instance.new("Frame")
+fix.Parent = topBar
+fix.Size = UDim2.new(1,0,0,15)
+fix.Position = UDim2.new(0,0,1,-15)
+fix.BorderSizePixel = 0
+fix.BackgroundColor3 = Color3.fromRGB(35,35,50)
 
 local title = Instance.new("TextLabel")
-title.Parent = frame
+title.Parent = topBar
 title.BackgroundTransparency = 1
-title.Size = UDim2.new(1,0,0,30)
-title.Text = "Spawner"
+title.Size = UDim2.new(1,-45,1,0)
+title.Position = UDim2.new(0,10,0,0)
+title.Text = "t17ed's Spawner"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 22
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
 title.TextColor3 = Color3.fromRGB(255,255,255)
 
--- DROPDOWN
-local dropdown = Instance.new("TextButton")
-dropdown.Parent = frame
-dropdown.Size = UDim2.new(0,230,0,30)
-dropdown.Position = UDim2.new(0,15,0,35)
-dropdown.Text = currentPreset
-dropdown.Font = Enum.Font.GothamBold
-dropdown.TextSize = 16
-dropdown.TextColor3 = Color3.fromRGB(255,255,255)
-dropdown.BackgroundColor3 = Color3.fromRGB(25,25,25)
+local minimize = Instance.new("TextButton")
+minimize.Parent = topBar
+minimize.Size = UDim2.new(0,30,0,30)
+minimize.Position = UDim2.new(1,-35,0,5)
+minimize.Text = "-"
+minimize.Font = Enum.Font.GothamBold
+minimize.TextSize = 22
+minimize.TextColor3 = Color3.fromRGB(255,255,255)
+minimize.BackgroundColor3 = Color3.fromRGB(60,60,90)
 
-local dropCorner = Instance.new("UICorner")
-dropCorner.Parent = dropdown
+local minCorner = Instance.new("UICorner")
+minCorner.Parent = minimize
 
-local dropdownOpen = false
-local dropdownButtons = {}
+local contentFrame = Instance.new("Frame")
+contentFrame.Parent = frame
+contentFrame.BackgroundTransparency = 1
+contentFrame.Position = UDim2.new(0,0,0,45)
+contentFrame.Size = UDim2.new(1,0,1,-45)
 
-local presetNames = {
+local grid = Instance.new("UIGridLayout")
+grid.Parent = contentFrame
+grid.CellSize = UDim2.new(0,90,0,90)
+grid.CellPadding = UDim2.new(0,10,0,10)
+grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+grid.VerticalAlignment = Enum.VerticalAlignment.Top
+grid.SortOrder = Enum.SortOrder.LayoutOrder
+
+local presetOrder = {
 	"Admin Preset",
 	"VIP Preset",
 	"Hammer Preset",
+	"Laser Preset",
 	"Money Preset",
-	"Laser Preset"
+	"Admin Preset"
 }
 
-for i,presetName in ipairs(presetNames) do
-	local option = Instance.new("TextButton")
-	option.Parent = frame
-	option.Size = UDim2.new(0,230,0,25)
-	option.Position = UDim2.new(0,15,0,65 + ((i-1)*27))
-	option.Text = presetName
-	option.Font = Enum.Font.GothamBold
-	option.TextSize = 14
-	option.TextColor3 = Color3.fromRGB(255,255,255)
-	option.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	option.Visible = false
+for _,presetName in ipairs(presetOrder) do
+	local preset = presets[presetName]
 
-	local optionCorner = Instance.new("UICorner")
-	optionCorner.Parent = option
+	local button = Instance.new("ImageButton")
+	button.Parent = contentFrame
+	button.BackgroundColor3 = Color3.fromRGB(40,40,55)
+	button.BorderSizePixel = 0
+	button.Image = preset.Image
+	button.ScaleType = Enum.ScaleType.Fit
 
-	option.MouseButton1Click:Connect(function()
+	local bCorner = Instance.new("UICorner")
+	bCorner.CornerRadius = UDim.new(0,12)
+	bCorner.Parent = button
+
+	local bStroke = Instance.new("UIStroke")
+	bStroke.Parent = button
+	bStroke.Color = Color3.fromRGB(90,90,140)
+
+	local label = Instance.new("TextLabel")
+	label.Parent = button
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(1,0,0,20)
+	label.Position = UDim2.new(0,0,1,-20)
+	label.Text = preset.Title
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextColor3 = Color3.fromRGB(255,255,255)
+
+	button.MouseButton1Click:Connect(function()
 		currentPreset = presetName
-		dropdown.Text = presetName
-		dropdownOpen = false
-
-		for _,b in ipairs(dropdownButtons) do
-			b.Visible = false
-		end
+		createAdminPanel()
 	end)
-
-	table.insert(dropdownButtons,option)
 end
 
-dropdown.MouseButton1Click:Connect(function()
-	dropdownOpen = not dropdownOpen
+-- AUTO ACCEPT TOGGLE
+local toggleFrame = Instance.new("Frame")
+toggleFrame.Parent = frame
+toggleFrame.Size = UDim2.new(1,-20,0,35)
+toggleFrame.Position = UDim2.new(0,10,1,-45)
+toggleFrame.BackgroundColor3 = Color3.fromRGB(35,35,50)
+toggleFrame.BorderSizePixel = 0
 
-	for _,b in ipairs(dropdownButtons) do
-		b.Visible = dropdownOpen
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.Parent = toggleFrame
+
+local toggleText = Instance.new("TextLabel")
+toggleText.Parent = toggleFrame
+toggleText.BackgroundTransparency = 1
+toggleText.Size = UDim2.new(0.7,0,1,0)
+toggleText.Position = UDim2.new(0,10,0,0)
+toggleText.Text = "Autoaccept"
+toggleText.Font = Enum.Font.GothamBold
+toggleText.TextSize = 18
+toggleText.TextXAlignment = Enum.TextXAlignment.Left
+toggleText.TextColor3 = Color3.fromRGB(255,255,255)
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Parent = toggleFrame
+toggleButton.Size = UDim2.new(0,70,0,25)
+toggleButton.Position = UDim2.new(1,-80,0.5,-12)
+toggleButton.Text = "OFF"
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextSize = 16
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.BackgroundColor3 = Color3.fromRGB(120,40,40)
+
+local toggleCorner2 = Instance.new("UICorner")
+toggleCorner2.Parent = toggleButton
+
+toggleButton.MouseButton1Click:Connect(function()
+	autoAccept = not autoAccept
+
+	if autoAccept then
+		toggleButton.Text = "ON"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(40,120,40)
+	else
+		toggleButton.Text = "OFF"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(120,40,40)
 	end
 end)
 
--- ADD BUTTON
-local addButton = Instance.new("TextButton")
-addButton.Parent = frame
-addButton.Size = UDim2.new(0,50,0,40)
-addButton.Position = UDim2.new(0,15,0,105)
-addButton.Text = "+"
-addButton.Font = Enum.Font.GothamBold
-addButton.TextSize = 30
-addButton.TextColor3 = Color3.fromRGB(0,255,0)
-addButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+-- MINIMIZE
+local minimized = false
 
-local addCorner = Instance.new("UICorner")
-addCorner.Parent = addButton
+minimize.MouseButton1Click:Connect(function()
+	minimized = not minimized
 
--- REMOVE BUTTON
-local removeButton = Instance.new("TextButton")
-removeButton.Parent = frame
-removeButton.Size = UDim2.new(0,50,0,40)
-removeButton.Position = UDim2.new(0,75,0,105)
-removeButton.Text = "-"
-removeButton.Font = Enum.Font.GothamBold
-removeButton.TextSize = 30
-removeButton.TextColor3 = Color3.fromRGB(255,0,0)
-removeButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	contentFrame.Visible = not minimized
+	toggleFrame.Visible = not minimized
 
-local removeCorner = Instance.new("UICorner")
-removeCorner.Parent = removeButton
-
--- COUNT BOX
-local countBox = Instance.new("TextBox")
-countBox.Parent = frame
-countBox.Size = UDim2.new(0,100,0,40)
-countBox.Position = UDim2.new(0,140,0,105)
-countBox.Text = "0"
-countBox.ClearTextOnFocus = false
-countBox.Font = Enum.Font.GothamBold
-countBox.TextSize = 22
-countBox.TextColor3 = Color3.fromRGB(255,255,255)
-countBox.BackgroundColor3 = Color3.fromRGB(20,20,20)
-
-local countCorner = Instance.new("UICorner")
-countCorner.Parent = countBox
+	if minimized then
+		frame.Size = UDim2.new(0,330,0,45)
+		minimize.Text = "+"
+	else
+		frame.Size = UDim2.new(0,330,0,320)
+		minimize.Text = "-"
+	end
+end)
 
 -- DRAGGING
 local dragging = false
 local dragStart
 local startPos
 
-title.InputBegan:Connect(function(input)
+topBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
@@ -509,7 +543,7 @@ title.InputBegan:Connect(function(input)
 	end
 end)
 
-title.InputEnded:Connect(function(input)
+topBar.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = false
 	end
@@ -528,56 +562,71 @@ UIS.InputChanged:Connect(function(input)
 	end
 end)
 
--- UPDATE COUNT
-local function updateCount()
-	countBox.Text = tostring(#adminPanels)
+--========================--
+-- AUTO ACCEPT SYSTEM
+--========================--
+
+local readyFrame
+local readyButton
+
+local function findGui()
+	local gui = playerGui:FindFirstChild("TradeLiveTrade")
+	if not gui then return end
+
+	local main = gui:FindFirstChild("TradeLiveTrade")
+	if not main then return end
+
+	local other = main:FindFirstChild("Other")
+	if not other then return end
+
+	readyFrame = other:FindFirstChild("Ready")
+	readyButton = other:FindFirstChild("ReadyButton")
 end
 
--- SET COUNT
-local function setPanelCount(amount)
-	amount = math.max(0,amount)
+findGui()
 
-	while #adminPanels < amount do
-		createAdminPanel()
+playerGui.DescendantAdded:Connect(function(v)
+	if v.Name == "ReadyButton" or v.Name == "Ready" then
+		task.wait()
+		findGui()
 	end
+end)
 
-	while #adminPanels > amount do
-		local panel = table.remove(adminPanels)
+local function click(button)
+	if not button then return end
+	if not button.Visible then return end
+	if not button.Active then return end
 
-		if panel and panel.Parent then
-			panel:Destroy()
+	pcall(function()
+		button:Activate()
+	end)
+
+	pcall(function()
+		for _, c in ipairs(getconnections(button.Activated)) do
+			c:Fire()
 		end
-	end
+	end)
 
-	updateCount()
+	pcall(function()
+		for _, c in ipairs(getconnections(button.MouseButton1Click)) do
+			c:Fire()
+		end
+	end)
 end
 
--- BUTTONS
-addButton.MouseButton1Click:Connect(function()
-	createAdminPanel()
-	updateCount()
-end)
-
-removeButton.MouseButton1Click:Connect(function()
-	if #adminPanels > 0 then
-		local panel = table.remove(adminPanels)
-
-		if panel and panel.Parent then
-			panel:Destroy()
-		end
+RunService.Heartbeat:Connect(function()
+	if not autoAccept then
+		return
 	end
 
-	updateCount()
-end)
+	if not readyFrame or not readyButton then
+		findGui()
+		return
+	end
 
-countBox.FocusLost:Connect(function()
-	local num = tonumber(countBox.Text)
-
-	if num then
-		setPanelCount(num)
-	else
-		updateCount()
+	if readyFrame.Visible then
+		click(readyButton)
+		click(readyButton)
+		click(readyButton)
 	end
 end)
-
-updateCount()

@@ -6,6 +6,7 @@
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -45,40 +46,42 @@ local adminPanels = {}
 local pendingPanel = nil
 local autoAccept = false
 
--- CURRENT PRESET
-local currentPreset = "Admin Preset"
-
 -- PRESETS
 local presets = {
-	["Admin Preset"] = {
+	{
+		Name = "Admin",
 		Image = "rbxassetid://139291316302932",
 		Cash = "9,999",
 		Title = "[🎁] Admin Panel"
 	},
 
-	["VIP Preset"] = {
+	{
+		Name = "VIP",
 		Image = "rbxassetid://89326624889199",
 		Cash = "499",
 		Title = "[🎁] VIP"
 	},
 
-	["Hammer Preset"] = {
+	{
+		Name = "Hammer",
 		Image = "rbxassetid://113735454516185",
 		Cash = "1,499",
 		Title = "[🎁] Ban Hammer"
 	},
 
-	["Laser Preset"] = {
+	{
+		Name = "Laser",
 		Image = "rbxassetid://127461267233201",
 		Cash = "749",
 		Title = "[🎁] Laser Gun"
 	},
 
-	["Money Preset"] = {
+	{
+		Name = "Money",
 		Image = "rbxassetid://93863319650684",
 		Cash = "299",
 		Title = "[🎁] 2x Money"
-	}
+	},
 }
 
 -- SOUNDS
@@ -97,7 +100,6 @@ failSound.SoundId = "rbxassetid://126210834885859"
 failSound.Volume = 0.5
 failSound.Parent = warningTemplate
 
--- DESCRIPTION
 description.Text =
 	"The other player will not see this item in the trade but will still receive the item. Do you still want to add this item to the trade?"
 
@@ -130,13 +132,7 @@ local function showNotification(text,color)
 	clone.Parent = notificationUI
 	clone.Visible = true
 
-	local txt = nil
-
-	if clone:IsA("TextLabel") then
-		txt = clone
-	else
-		txt = clone:FindFirstChild("Text",true)
-	end
+	local txt = clone:IsA("TextLabel") and clone or clone:FindFirstChild("Text",true)
 
 	if txt then
 		txt.RichText = true
@@ -151,7 +147,7 @@ local function showNotification(text,color)
 	end)
 end
 
--- RESET COLORS
+-- RESET PANELS
 local function resetPanels()
 	for _,panel in ipairs(adminPanels) do
 		if panel and panel.Parent then
@@ -186,7 +182,6 @@ end
 
 task.spawn(connectAcceptWatcher)
 
--- TRADE VISIBILITY
 tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 	if tradeUI.Visible then
 		resetPanels()
@@ -198,7 +193,7 @@ tradeUI:GetPropertyChangedSignal("Visible"):Connect(function()
 end)
 
 -- CREATE PANEL
-local function createAdminPanel()
+local function createPanel(preset)
 	local clone = template:Clone()
 	clone.Name = "AdminPanel"
 	clone.Parent = scrollingFrame
@@ -209,8 +204,6 @@ local function createAdminPanel()
 	local title = spacer:WaitForChild("Title")
 
 	local stroke = spacer:FindFirstChildOfClass("UIStroke")
-
-	local preset = presets[currentPreset]
 
 	cash.Text = preset.Cash
 	title.Text = preset.Title
@@ -223,7 +216,6 @@ local function createAdminPanel()
 
 	clone:SetAttribute("Clicked",false)
 
-	-- IMAGE
 	local img = spacer:FindFirstChild("CustomImage")
 
 	if not img then
@@ -237,7 +229,6 @@ local function createAdminPanel()
 
 	img.Image = preset.Image
 
-	-- INPUTS
 	local holding = false
 
 	spacer.InputBegan:Connect(function(input)
@@ -289,15 +280,25 @@ local function createAdminPanel()
 	table.insert(adminPanels,clone)
 end
 
--- DELETE PANELS
-local function deleteAdminPanels()
-	for _,v in ipairs(adminPanels) do
-		if v and v.Parent then
-			v:Destroy()
+-- REMOVE PANEL
+local function removePanelByTitle(titleText)
+	for i = #adminPanels,1,-1 do
+		local panel = adminPanels[i]
+
+		if panel and panel.Parent then
+			local spacer = panel:FindFirstChild("Spacer")
+
+			if spacer then
+				local title = spacer:FindFirstChild("Title")
+
+				if title and title.Text == titleText then
+					panel:Destroy()
+					table.remove(adminPanels,i)
+					return
+				end
+			end
 		end
 	end
-
-	table.clear(adminPanels)
 end
 
 -- YES BUTTON
@@ -343,7 +344,7 @@ noButton.MouseButton1Click:Connect(function()
 end)
 
 --========================--
--- MODERN SPAWNER UI
+-- NEW UI
 --========================--
 
 local gui = Instance.new("ScreenGui")
@@ -353,182 +354,60 @@ gui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Parent = gui
-frame.Size = UDim2.new(0,330,0,320)
-frame.Position = UDim2.new(0.5,-165,0.5,-160)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,35)
+frame.Size = UDim2.new(0,320,0,260)
+frame.Position = UDim2.new(0.5,-160,0.5,-130)
+frame.BackgroundColor3 = Color3.fromRGB(22,22,28)
 frame.BorderSizePixel = 0
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0,14)
-corner.Parent = frame
+Instance.new("UICorner",frame).CornerRadius = UDim.new(0,14)
 
-local stroke = Instance.new("UIStroke")
-stroke.Parent = frame
-stroke.Color = Color3.fromRGB(120,80,255)
-stroke.Thickness = 2
+local frameStroke = Instance.new("UIStroke")
+frameStroke.Parent = frame
+frameStroke.Color = Color3.fromRGB(120,80,255)
+frameStroke.Thickness = 2
 
+local gradient = Instance.new("UIGradient")
+gradient.Parent = frame
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0,Color3.fromRGB(40,40,60)),
+	ColorSequenceKeypoint.new(1,Color3.fromRGB(20,20,30))
+}
+
+-- TITLE BAR
 local topBar = Instance.new("Frame")
 topBar.Parent = frame
-topBar.Size = UDim2.new(1,0,0,40)
-topBar.BackgroundColor3 = Color3.fromRGB(35,35,50)
-topBar.BorderSizePixel = 0
-
-local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0,14)
-topCorner.Parent = topBar
-
-local fix = Instance.new("Frame")
-fix.Parent = topBar
-fix.Size = UDim2.new(1,0,0,15)
-fix.Position = UDim2.new(0,0,1,-15)
-fix.BorderSizePixel = 0
-fix.BackgroundColor3 = Color3.fromRGB(35,35,50)
+topBar.Size = UDim2.new(1,0,0,35)
+topBar.BackgroundTransparency = 1
 
 local title = Instance.new("TextLabel")
 title.Parent = topBar
 title.BackgroundTransparency = 1
-title.Size = UDim2.new(1,-45,1,0)
+title.Size = UDim2.new(1,-40,1,0)
 title.Position = UDim2.new(0,10,0,0)
-title.Text = "t17ed's Spawner"
 title.Font = Enum.Font.GothamBold
+title.Text = "t17ed's Spawner"
+title.TextColor3 = Color3.new(1,1,1)
 title.TextSize = 20
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.TextColor3 = Color3.fromRGB(255,255,255)
 
 local minimize = Instance.new("TextButton")
 minimize.Parent = topBar
 minimize.Size = UDim2.new(0,30,0,30)
-minimize.Position = UDim2.new(1,-35,0,5)
+minimize.Position = UDim2.new(1,-35,0,2)
 minimize.Text = "-"
 minimize.Font = Enum.Font.GothamBold
 minimize.TextSize = 22
-minimize.TextColor3 = Color3.fromRGB(255,255,255)
-minimize.BackgroundColor3 = Color3.fromRGB(60,60,90)
+minimize.TextColor3 = Color3.new(1,1,1)
+minimize.BackgroundColor3 = Color3.fromRGB(50,50,70)
 
-local minCorner = Instance.new("UICorner")
-minCorner.Parent = minimize
+Instance.new("UICorner",minimize)
 
-local contentFrame = Instance.new("Frame")
-contentFrame.Parent = frame
-contentFrame.BackgroundTransparency = 1
-contentFrame.Position = UDim2.new(0,0,0,45)
-contentFrame.Size = UDim2.new(1,0,1,-45)
-
-local grid = Instance.new("UIGridLayout")
-grid.Parent = contentFrame
-grid.CellSize = UDim2.new(0,90,0,90)
-grid.CellPadding = UDim2.new(0,10,0,10)
-grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
-grid.VerticalAlignment = Enum.VerticalAlignment.Top
-grid.SortOrder = Enum.SortOrder.LayoutOrder
-
-local presetOrder = {
-	"Admin Preset",
-	"VIP Preset",
-	"Hammer Preset",
-	"Laser Preset",
-	"Money Preset",
-	"Admin Preset"
-}
-
-for _,presetName in ipairs(presetOrder) do
-	local preset = presets[presetName]
-
-	local button = Instance.new("ImageButton")
-	button.Parent = contentFrame
-	button.BackgroundColor3 = Color3.fromRGB(40,40,55)
-	button.BorderSizePixel = 0
-	button.Image = preset.Image
-	button.ScaleType = Enum.ScaleType.Fit
-
-	local bCorner = Instance.new("UICorner")
-	bCorner.CornerRadius = UDim.new(0,12)
-	bCorner.Parent = button
-
-	local bStroke = Instance.new("UIStroke")
-	bStroke.Parent = button
-	bStroke.Color = Color3.fromRGB(90,90,140)
-
-	local label = Instance.new("TextLabel")
-	label.Parent = button
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1,0,0,20)
-	label.Position = UDim2.new(0,0,1,-20)
-	label.Text = preset.Title
-	label.Font = Enum.Font.GothamBold
-	label.TextScaled = true
-	label.TextColor3 = Color3.fromRGB(255,255,255)
-
-	button.MouseButton1Click:Connect(function()
-		currentPreset = presetName
-		createAdminPanel()
-	end)
-end
-
--- AUTO ACCEPT TOGGLE
-local toggleFrame = Instance.new("Frame")
-toggleFrame.Parent = frame
-toggleFrame.Size = UDim2.new(1,-20,0,35)
-toggleFrame.Position = UDim2.new(0,10,1,-45)
-toggleFrame.BackgroundColor3 = Color3.fromRGB(35,35,50)
-toggleFrame.BorderSizePixel = 0
-
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.Parent = toggleFrame
-
-local toggleText = Instance.new("TextLabel")
-toggleText.Parent = toggleFrame
-toggleText.BackgroundTransparency = 1
-toggleText.Size = UDim2.new(0.7,0,1,0)
-toggleText.Position = UDim2.new(0,10,0,0)
-toggleText.Text = "Autoaccept"
-toggleText.Font = Enum.Font.GothamBold
-toggleText.TextSize = 18
-toggleText.TextXAlignment = Enum.TextXAlignment.Left
-toggleText.TextColor3 = Color3.fromRGB(255,255,255)
-
-local toggleButton = Instance.new("TextButton")
-toggleButton.Parent = toggleFrame
-toggleButton.Size = UDim2.new(0,70,0,25)
-toggleButton.Position = UDim2.new(1,-80,0.5,-12)
-toggleButton.Text = "OFF"
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextSize = 16
-toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
-toggleButton.BackgroundColor3 = Color3.fromRGB(120,40,40)
-
-local toggleCorner2 = Instance.new("UICorner")
-toggleCorner2.Parent = toggleButton
-
-toggleButton.MouseButton1Click:Connect(function()
-	autoAccept = not autoAccept
-
-	if autoAccept then
-		toggleButton.Text = "ON"
-		toggleButton.BackgroundColor3 = Color3.fromRGB(40,120,40)
-	else
-		toggleButton.Text = "OFF"
-		toggleButton.BackgroundColor3 = Color3.fromRGB(120,40,40)
-	end
-end)
-
--- MINIMIZE
-local minimized = false
-
-minimize.MouseButton1Click:Connect(function()
-	minimized = not minimized
-
-	contentFrame.Visible = not minimized
-	toggleFrame.Visible = not minimized
-
-	if minimized then
-		frame.Size = UDim2.new(0,330,0,45)
-		minimize.Text = "+"
-	else
-		frame.Size = UDim2.new(0,330,0,320)
-		minimize.Text = "-"
-	end
-end)
+-- CONTAINER
+local container = Instance.new("Frame")
+container.Parent = frame
+container.Size = UDim2.new(1,0,1,-40)
+container.Position = UDim2.new(0,0,0,40)
+container.BackgroundTransparency = 1
 
 -- DRAGGING
 local dragging = false
@@ -562,10 +441,119 @@ UIS.InputChanged:Connect(function(input)
 	end
 end)
 
---========================--
--- AUTO ACCEPT SYSTEM
---========================--
+-- MINIMIZE
+local minimized = false
 
+minimize.MouseButton1Click:Connect(function()
+	minimized = not minimized
+
+	container.Visible = not minimized
+	frame.Size = minimized and UDim2.new(0,320,0,40) or UDim2.new(0,320,0,260)
+
+	minimize.Text = minimized and "+" or "-"
+end)
+
+-- BUTTON CREATOR
+local positions = {
+	UDim2.new(0,15,0,10),
+	UDim2.new(0,115,0,10),
+	UDim2.new(0,215,0,10),
+
+	UDim2.new(0.5,-95,0,110),
+	UDim2.new(0.5,5,0,110),
+}
+
+for i,preset in ipairs(presets) do
+	local button = Instance.new("ImageButton")
+	button.Parent = container
+	button.Size = UDim2.new(0,90,0,90)
+	button.Position = positions[i]
+	button.BackgroundColor3 = Color3.fromRGB(35,35,45)
+	button.Image = preset.Image
+
+	Instance.new("UICorner",button).CornerRadius = UDim.new(0,12)
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Parent = button
+	stroke.Color = Color3.fromRGB(80,80,120)
+
+	local grad = Instance.new("UIGradient")
+	grad.Parent = button
+	grad.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(55,55,75)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(30,30,40))
+	}
+
+	local txt = Instance.new("TextLabel")
+	txt.Parent = button
+	txt.BackgroundTransparency = 1
+	txt.Size = UDim2.new(1,0,0,20)
+	txt.Position = UDim2.new(0,0,1,-20)
+	txt.Font = Enum.Font.GothamBold
+	txt.Text = preset.Name
+	txt.TextColor3 = Color3.new(1,1,1)
+	txt.TextSize = 14
+
+	local function flash()
+		local tween1 = TweenService:Create(
+			button,
+			TweenInfo.new(0.08),
+			{BackgroundColor3 = Color3.fromRGB(0,255,120)}
+		)
+
+		local tween2 = TweenService:Create(
+			button,
+			TweenInfo.new(0.15),
+			{BackgroundColor3 = Color3.fromRGB(35,35,45)}
+		)
+
+		tween1:Play()
+		tween1.Completed:Wait()
+		tween2:Play()
+	end
+
+	button.MouseButton1Click:Connect(function()
+		flash()
+		createPanel(preset)
+	end)
+
+	button.MouseButton2Click:Connect(function()
+		flash()
+		removePanelByTitle(preset.Title)
+	end)
+end
+
+-- AUTO ACCEPT TOGGLE
+local toggle = Instance.new("TextButton")
+toggle.Parent = container
+toggle.Size = UDim2.new(0,290,0,35)
+toggle.Position = UDim2.new(0,15,1,-45)
+toggle.BackgroundColor3 = Color3.fromRGB(40,40,55)
+toggle.Text = "AutoAccept : OFF"
+toggle.Font = Enum.Font.GothamBold
+toggle.TextSize = 18
+toggle.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner",toggle).CornerRadius = UDim.new(0,10)
+
+local tgGrad = Instance.new("UIGradient")
+tgGrad.Parent = toggle
+tgGrad.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0,Color3.fromRGB(70,70,90)),
+	ColorSequenceKeypoint.new(1,Color3.fromRGB(40,40,55))
+}
+
+toggle.MouseButton1Click:Connect(function()
+	autoAccept = not autoAccept
+
+	toggle.Text = autoAccept and "AutoAccept : ON" or "AutoAccept : OFF"
+
+	toggle.BackgroundColor3 = autoAccept
+		and Color3.fromRGB(20,90,40)
+		or Color3.fromRGB(40,40,55)
+end)
+
+-- AUTO ACCEPT SCRIPT
 local readyFrame
 local readyButton
 
